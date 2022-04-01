@@ -39,14 +39,14 @@ while chess.running:
             mi * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, \
                 CHESS_BOARD_CELL_PIXELS, CHESS_BOARD_CELL_PIXELS)
                 
-                src_horse_type = chess.board[mi][mj]
+                src_piece_type = chess.board[mi][mj]
                 is_src_set = True
             else:
                 target_i, target_j = (mi, mj)
                 target_rect = (mj * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, \
             mi * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, \
                 CHESS_BOARD_CELL_PIXELS, CHESS_BOARD_CELL_PIXELS)
-                target_horse_type = chess.board[mi][mj]
+                target_piece_type = chess.board[mi][mj]
                 is_target_set = True
         if is_src_set and is_target_set:
             # print("출발지:",  src_i, src_j, "목적지:", target_i, target_j)
@@ -68,11 +68,11 @@ while chess.running:
                 pygame.draw.rect(chess.display.SURFACE, (180, 136, 102), rect, 0)
 
     if is_src_set:
-        pygame.draw.rect(chess.display.SURFACE, CHESS_HORSE_SRC_COLOR, src_rect, 0)
+        pygame.draw.rect(chess.display.SURFACE, CHESS_PIECE_SRC_COLOR, src_rect, 0)
     elif is_target_set:
-        pygame.draw.rect(chess.display.SURFACE, CHESS_HORSE_TARGET_COLOR, taget_rect, 0)
+        pygame.draw.rect(chess.display.SURFACE, CHESS_PIECE_TARGET_COLOR, target_rect, 0)
 
-    # drawing the horses
+    # drawing the pieces
     # chess.board[N][M] => '[q'
     for N in range(CHESS_BOARD_CELL_WIDTH):
         for M in range(CHESS_BOARD_CELL_WIDTH):
@@ -91,9 +91,9 @@ while chess.running:
                 sprite_num = 5
 
             if chess.board[N][M][0] == WHITE:
-                chess.display.SURFACE.blit(chess.display.white_horse_list[sprite_num], (M * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, N * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING))
+                chess.display.SURFACE.blit(chess.display.white_piece_list[sprite_num], (M * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, N * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING))
             elif chess.board[N][M][0] == BLACK:
-                chess.display.SURFACE.blit(chess.display.black_horse_list[sprite_num], (M * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, N * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING))
+                chess.display.SURFACE.blit(chess.display.black_piece_list[sprite_num], (M * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, N * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING))
 
                 
     pygame.display.update()

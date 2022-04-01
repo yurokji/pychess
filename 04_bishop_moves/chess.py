@@ -1,6 +1,5 @@
 from pickle import TRUE
 from platform import java_ver
-from numpy import True_
 import pygame
 from pygame.locals import *
 import math
@@ -21,84 +20,87 @@ def sign(x):
 class Display:
     def __init__(self):
         self.SURFACE = pygame.display.set_mode((CHES_BOARD_SIZE,CHES_BOARD_SIZE))
-        self.img_horse = pygame.image.load((CHESS_HORSE_IMAGE_NAME))
-        self.white_horse_list = []
-        self.black_horse_list = []
-        self.prep_horse_picture()
+        self.img_piece = pygame.image.load((CHESS_PIECE_IMAGE_NAME))
+        self.white_piece_list = []
+        self.black_piece_list = []
+        self.prep_piece_picture()
         self.SURFACE.fill((100,100,100))
 
-    def prep_horse_picture(self):
+    def prep_piece_picture(self):
         for i in range(2):
             for j in range(6):
-                self.img_horse = pygame.transform.scale(self.img_horse, (CHESS_HORSE_PIXELS * 6,CHESS_HORSE_PIXELS * 2))
-                cropped_region = (j * CHESS_HORSE_PIXELS, i * CHESS_HORSE_PIXELS, CHESS_HORSE_PIXELS, CHESS_HORSE_PIXELS)
-                cropped = pygame.Surface((CHESS_HORSE_PIXELS, CHESS_HORSE_PIXELS), pygame.SRCALPHA)
-                cropped.blit(self.img_horse, (0,0), cropped_region)
+                self.img_piece = pygame.transform.scale(self.img_piece, (CHESS_PIECE_PIXELS * 6,CHESS_PIECE_PIXELS * 2))
+                cropped_region = (j * CHESS_PIECE_PIXELS, i * CHESS_PIECE_PIXELS, CHESS_PIECE_PIXELS, CHESS_PIECE_PIXELS)
+                cropped = pygame.Surface((CHESS_PIECE_PIXELS, CHESS_PIECE_PIXELS), pygame.SRCALPHA)
+                cropped.blit(self.img_piece, (0,0), cropped_region)
                 if i == 0:
-                    self.white_horse_list.append(cropped)
+                    self.white_piece_list.append(cropped)
                 else:
-                    self.black_horse_list.append(cropped)
+                    self.black_piece_list.append(cropped)
 
 
 # 기본적인 말
-class Horse:
-    def __init__(self, color, type, pos, num, alive=True):
+class Piece:
+    def __init__(self, color, type, pos, num):
         self.type = type
         self.color = color
         self.pos = pos
         self.prevPos = pos
         self.num = num
-        self.alive = alive
-        
+        self.alive = True
+        self.moved = False
     def setAlive(self, alive):
         self.alive = alive
+    def setMoved(self, moved):
+        self.moved = moved
 
 # 검은색/ 흰색 팀 만들기
-class Team:
+class Color:
     def __init__(self, color):
         self.color = color
-        self.horses = []
-        self.makeTeam()
+        self.pieces = []
+        self.init()
     
     # 초기 말의 위치를 정함
-    def makeTeam(self):
+    def init(self):
          # 검은색 팀일 경우
         if self.color == BLACK:
             for x in range(CHESS_BOARD_CELL_WIDTH):
-                self.horses.append(Horse(self.color, PAWN, [1, x], int(x)))
-            self.horses.append(Horse(self.color, ROOK, [0, 0], 8))
-            self.horses.append(Horse(self.color, KNIGHT, [0, 1],9))
-            self.horses.append(Horse(self.color, BISHOP, [0, 2],10))
-            self.horses.append(Horse(self.color, KING, [0, 3],11))
-            self.horses.append(Horse(self.color, QUEEN, [0, 4],12))
-            self.horses.append(Horse(self.color, BISHOP, [0, 5],13))
-            self.horses.append(Horse(self.color, KNIGHT, [0, 6],14))
-            self.horses.append(Horse(self.color, ROOK, [0, 7],15))
+                self.pieces.append(Piece(self.color, PAWN, [1, x], int(x)))
+            self.pieces.append(Piece(self.color, ROOK, [0, 0], 8))
+            self.pieces.append(Piece(self.color, KNIGHT, [0, 1],9))
+            self.pieces.append(Piece(self.color, BISHOP, [0, 2],10))
+            self.pieces.append(Piece(self.color, KING, [0, 3],11))
+            self.pieces.append(Piece(self.color, QUEEN, [0, 4],12))
+            self.pieces.append(Piece(self.color, BISHOP, [0, 5],13))
+            self.pieces.append(Piece(self.color, KNIGHT, [0, 6],14))
+            self.pieces.append(Piece(self.color, ROOK, [0, 7],15))
         # 흰색 팀일 경우
         else:
             for x in range(CHESS_BOARD_CELL_WIDTH):
-                self.horses.append(Horse(self.color, PAWN, [6, x], 20+int(x)))
-            self.horses.append(Horse(self.color, ROOK, [7, 0],28))
-            self.horses.append(Horse(self.color, KNIGHT, [7, 1],29))
-            self.horses.append(Horse(self.color, BISHOP, [7, 2],30))
-            self.horses.append(Horse(self.color, KING, [7, 3],31))
-            self.horses.append(Horse(self.color, QUEEN, [7, 4],32))
-            self.horses.append(Horse(self.color, BISHOP, [7, 5],33))
-            self.horses.append(Horse(self.color, KNIGHT, [7, 6],34))
-            self.horses.append(Horse(self.color, ROOK, [7, 7],35))
+                self.pieces.append(Piece(self.color, PAWN, [6, x], 20+int(x)))
+            self.pieces.append(Piece(self.color, ROOK, [7, 0],28))
+            self.pieces.append(Piece(self.color, KNIGHT, [7, 1],29))
+            self.pieces.append(Piece(self.color, BISHOP, [7, 2],30))
+            self.pieces.append(Piece(self.color, KING, [7, 3],31))
+            self.pieces.append(Piece(self.color, QUEEN, [7, 4],32))
+            self.pieces.append(Piece(self.color, BISHOP, [7, 5],33))
+            self.pieces.append(Piece(self.color, KNIGHT, [7, 6],34))
+            self.pieces.append(Piece(self.color, ROOK, [7, 7],35))
      
         
 
 
   
 class Chess:
-    teams = {}
+    colors = {}
     def __init__(self):
         self.num_moves = 0  
         self.board = []
         self.turn = WHITE
-        self.teams["black"] = Team(BLACK)
-        self.teams["white"] = Team(WHITE)
+        self.colors = {}
+        self.colors["black"] = Color(BLACK)
+        self.colors["white"] = Color(WHITE)
         self.clear_board()
         self.fill_board()
         self.display = Display()
@@ -126,7 +128,20 @@ class Chess:
             for M in range(CHESS_BOARD_CELL_WIDTH):
                 self.board[N][M] = EMPTY
 
+
+    def init(self):
+        self.num_moves = 0  
+        self.board = []
+        self.turn = WHITE
+        self.colors = {}
+        self.colors["black"] = Color(BLACK)
+        self.colors["white"] = Color(WHITE)
+        self.clear_board()
+        self.fill_board()
+        self.display = Display()
+        self.running = True
     
+
     def is_valid_pos_str(self, pos_str):
         if len(pos_str) != 2:
             return False
@@ -160,6 +175,7 @@ class Chess:
     #     else:
     #         return False, -1, -1
 
+
     # 픽셀 위치를 -> i, j롤 환산하는 함수
     def posPixel2Num(self, sx, sy, px, py, stride):
         pad = 0.1
@@ -189,59 +205,82 @@ class Chess:
         return False, str_pos
     
     
-    def get_horse_team(self, i, j):
+    def get_piece_color(self, i, j):
         return self.board[i][j][0]
     
-    def get_horse_type(self, i,j):
+    def get_piece_type(self, i,j):
         return self.board[i][j][1]
 
     
-    def get_horse_num(self, color, i,j):
+    def get_piece_num(self, color, i,j):
         if color == BLACK:
-            for black_horse in self.teams["black"].horses:
-                if black_horse.pos[0] == i and black_horse.pos[1] == j:
-                    return black_horse.num
+            for black_piece in self.colors["black"].pieces:
+                if black_piece.pos[0] == i and black_piece.pos[1] == j:
+                    return black_piece.num
         else:   
-            for white_horse in self.teams["white"].horses:
-                print(white_horse.pos, i, j)
-                if white_horse.pos[0] == i and white_horse.pos[1] == j:
-                    return white_horse.num
+            for white_piece in self.colors["white"].pieces:
+                print(white_piece.pos, i, j)
+                if white_piece.pos[0] == i and white_piece.pos[1] == j:
+                    return white_piece.num
         return -1
     
-    def get_horse_pos(self, horse_num):
-        if horse_num < 20:
-            for black_horse in self.teams["black"].horses:
-                if black_horse.num == horse_num:
-                    return black_horse.pos[0], black_horse.pos[1]
+    def is_piece_moved(self, piece_num):
+        if piece_num < 20:
+            for black_piece in self.colors["black"].pieces:
+                if black_piece.num == piece_num:
+                    return black_piece.moved
         else:
-            for white_horse in self.teams["white"].horses:
-                if white_horse.num == horse_num:
-                    return white_horse.pos[0], white_horse.pos[1]
+            for white_piece in self.colors["white"].pieces:
+                if white_piece.num == piece_num:
+                    return white_piece.moved
+        return -1
+    
+    def set_piece_moved(self, piece_num, moved):
+        if piece_num < 20:
+            for black_piece in self.colors["black"].pieces:
+                if black_piece.num == piece_num:
+                    black_piece.moved = moved
+                    break
+        else:
+            for white_piece in self.colors["white"].pieces:
+                if white_piece.num == piece_num:
+                    white_piece.moved = moved
+                    break
+
+    def get_piece_pos(self, piece_num):
+        if piece_num < 20:
+            for black_piece in self.colors["black"].pieces:
+                if black_piece.num == piece_num:
+                    return black_piece.pos[0], black_piece.pos[1]
+        else:
+            for white_piece in self.colors["white"].pieces:
+                if white_piece.num == piece_num:
+                    return white_piece.pos[0], white_piece.pos[1]
         return -1, -1
     
-    def set_horse_pos(self, horse_num, i_to, j_to):
-        if horse_num < 20:
-            for i in range(len(self.teams["black"].horses)):
-                if self.teams["black"].horses[i].num == horse_num:
-                    self.teams["black"].horses[i].pos = [i_to, j_to]
+    def set_piece_pos(self, piece_num, i_to, j_to):
+        if piece_num < 20:
+            for i in range(len(self.colors["black"].pieces)):
+                if self.colors["black"].pieces[i].num == piece_num:
+                    self.colors["black"].pieces[i].pos = [i_to, j_to]
                     break
         else:  
-            for i in range(len(self.teams["white"].horses)):
-                if self.teams["white"].horses[i].num == horse_num:
-                    self.teams["white"].horses[i].pos = [i_to, j_to]
+            for i in range(len(self.colors["white"].pieces)):
+                if self.colors["white"].pieces[i].num == piece_num:
+                    self.colors["white"].pieces[i].pos = [i_to, j_to]
                     break
    
    
-    def set_horse_alive(self, horse_num, alive):
-        if horse_num < 20:
-            for i in range(len(self.teams["black"].horses)):
-                if self.teams["black"].horses[i].num == horse_num:
-                    self.teams["black"].horses[i].setAlive(alive)
+    def set_piece_alive(self, piece_num, alive):
+        if piece_num < 20:
+            for i in range(len(self.colors["black"].pieces)):
+                if self.colors["black"].pieces[i].num == piece_num:
+                    self.colors["black"].pieces[i].setAlive(alive)
                     break
         else:  
-            for i in range(len(self.teams["white"].horses)):
-                if self.teams["white"].horses[i].num == horse_num:
-                    self.teams["white"].horses[i].setAlive(alive)
+            for i in range(len(self.colors["white"].pieces)):
+                if self.colors["white"].pieces[i].num == piece_num:
+                    self.colors["white"].pieces[i].setAlive(alive)
                     break
    
     
@@ -252,24 +291,24 @@ class Chess:
         self.board[i][j] =  colorStr + typeStr + "{:02d}".format(num) 
 
     
-    # def set_cell(self, pos_str, horse_type_str):
+    # def set_cell(self, pos_str, piece_type_str):
     #     isValid, i, j  = self.posStr2Num(pos_str)
     #     if isValid:
-    #         self.board[i][j] = horse_type_str
+    #         self.board[i][j] = piece_type_str
     #         return True
     #     return False
 
     def fill_board(self):
-        for black_horse in self.teams["black"].horses:
-            if black_horse.alive:
-                self.set_cell(black_horse.color, black_horse.type, black_horse.pos[0], black_horse.pos[1], black_horse.num)
+        for black_piece in self.colors["black"].pieces:
+            if black_piece.alive:
+                self.set_cell(black_piece.color, black_piece.type, black_piece.pos[0], black_piece.pos[1], black_piece.num)
             else:
-                print(black_horse, "black not alive")
-        for white_horse in self.teams["white"].horses:
-            if white_horse.alive:
-                self.set_cell(white_horse.color, white_horse.type, white_horse.pos[0], white_horse.pos[1], white_horse.num)
+                print(black_piece, "black not alive")
+        for white_piece in self.colors["white"].pieces:
+            if white_piece.alive:
+                self.set_cell(white_piece.color, white_piece.type, white_piece.pos[0], white_piece.pos[1], white_piece.num)
             else:
-                print(white_horse, "white not alive")
+                print(white_piece, "white not alive")
 
 
     def update_board(self):
@@ -286,131 +325,8 @@ class Chess:
             else:
                 self.turn = WHITE
 
-    def checkHorseType(self, i, j, HORSETYPE):
-        return HORSETYPE == self.get_horse_type(i,j)
-
-
-    def move(self, i_from, j_from, i_to, j_to):
-        if i_from == i_to and j_from == j_to:
-            return False
-        srcTeam = self.get_cell(i_from, j_from)[0]
-        teamStr = ""
-        if srcTeam == BLACK:
-            teamStr = "검은색"
-        else:
-            teamStr = "흰색"
-            
-        isSrcTurn = (self.turn == srcTeam)
-        isValid_from = self.isValidPos(i_from, j_from)
-        isValid_to = self.isValidPos(i_to, j_to)
-        if not isSrcTurn or not isValid_from or not isValid_to:
-            return False
-        isMoved = False
-        if self.checkHorseType(i_from, j_from, PAWN):
-            if self.pawn_move(i_from, j_from, i_to, j_to):
-                print(teamStr+"폰 이동")
-                isMoved = True
-            elif self.pawn_attack(i_from, j_from, i_to, j_to):
-                print(teamStr+"폰 공격")
-                isMoved = True
-        elif self.checkHorseType(i_from, j_from, ROOK):
-            if self.rook_move(i_from, j_from, i_to, j_to):
-                print(teamStr+"룩 이동")
-                isMoved = True
-            elif self.rook_attack(i_from, j_from, i_to, j_to):
-                print(teamStr+"룩 공격")
-                isMoved = True
-
-       
-        # 말이 성공적으로 움직였다면
-        if isMoved: 
-             # 보드 업데이트
-            self.update_board()
-               # 상대편 차례
-            self.nextTurn(isMoved)
-                
-    # 폰 움직임 함수
-    def pawn_move(self, i_from, j_from, i_to, j_to):
-        src_horse = self.get_cell(i_from, j_from)
-        src_horse_team = src_horse[0]
-        target_horse = self.get_cell(i_to, j_to)
-        target_horse_team = target_horse[0]
-        isJPosSame = j_from == j_to
-        isIPosNotSame = i_from != i_to
-        isTargetEmpty = self.board[i_to][j_to] ==  EMPTY 
-        isValid = isJPosSame and isIPosNotSame and isTargetEmpty
-        if isValid:
-            # 흑일 때는 차이가 양수 1이나 2여야 함
-            diff = i_to - i_from
-            if self.turn == BLACK:
-                # print("Asdfsadf")
-                # print("검은 폰 움직임")
-                if diff >= 1 and diff <= 2:
-                    is_ok = True
-                    for di in range(1, diff + 1):
-                        if self.board[i_from + di][j_from] != EMPTY:
-                            is_ok = False
-                            break
-                    if is_ok:
-                        self.set_horse_pos(self.get_horse_num(src_horse_team, i_from,j_from), i_to, j_to)
-                        return True
-            # 흰 폰 움직임
-            else:
-                if diff >= -2 and diff <= -1:
-                    is_ok = True
-                    for di in range(1, abs(diff) + 1):
-                        if self.board[i_from - di][j_from] != EMPTY:
-                            is_ok = False
-                            break
-                    if is_ok:
-                        self.set_horse_pos(self.get_horse_num(src_horse_team, i_from,j_from), i_to, j_to)
-                        return True
-        return False
-
-    # 폰 움직임 함수
-    # pawn_move('b2', 'b4')
-    def pawn_attack(self, i_from, j_from, i_to, j_to):
-        src_horse = self.get_cell(i_from, j_from)
-        src_horse_team = src_horse[0]
-        target_horse = self.get_cell(i_to, j_to)
-        target_horse_team = target_horse[0]
-        is_killed = False
-        diff_i = i_to - i_from
-        diff_j = j_to - j_from
-
-        # 움직임이 대각선인지 체크
-        if abs(diff_i) != 1 or abs(diff_j) != 1:
-            return False
-        
-        # 공격할 대상이 없는지 체크
-        if target_horse == EMPTY:
-            return False
-        
-        # 다른 편인지 체크
-        if  src_horse[0] == target_horse[0]:
-            return False
-    
-        if team_color == BLACK:
-           
-            if diff_i == 1:
-                print("검은 폰 움직임")
-                print("before: ", self.get_horse_num(src_horse_team, i_from,j_from))
-                self.set_horse_alive(self.get_horse_num(target_horse_team, i_to,j_to), False)
-                self.set_horse_pos(self.get_horse_num(src_horse_team, i_from,j_from), i_to, j_to)
-                return True
-        else:
-           
-            if diff_i == -1:
-                print("흰 폰 움직임")
-                print("before: ", self.get_horse_num(src_horse_team, i_from,j_from))
-                self.set_horse_alive(self.get_horse_num(target_horse_team, i_to,j_to), False)
-                self.set_horse_pos(self.get_horse_num(src_horse_team, i_from,j_from), i_to, j_to)
-                return True
-
-        return False
-        
-        
-        
+    def checkPieceType(self, i, j, PIECETYPE):
+        return PIECETYPE == self.get_piece_type(i,j)
 
     def isHoriClear(self, i_from, j_from, i_to, j_to):
         diff = j_to - j_from 
@@ -424,15 +340,173 @@ class Chess:
         for di in range(1, abs(diff) + 1):
             if self.board[i_from + sign(diff) * di][j_from] != EMPTY:
                 return False  
-        return True          
+        return True       
+
+
+    def move(self, i_from, j_from, i_to, j_to):
+        if i_from == i_to and j_from == j_to:
+            return False
+        src_piece = self.get_cell(i_from, j_from)
+        src_piece_color = src_piece[0]
+        src_piece_num = self.get_piece_num(src_piece_color, i_from,j_from)
+        target_piece = self.get_cell(i_to, j_to)
+        target_piece_color = target_piece[0]
+        colorStr = ""
+        if src_piece_color == BLACK:
+            colorStr = "검은색"
+        else:
+            colorStr = "흰색"
+            
+        isSrcTurn = (self.turn == src_piece_color)
+        isValid_from = self.isValidPos(i_from, j_from)
+        isValid_to = self.isValidPos(i_to, j_to)
+        if not isSrcTurn or not isValid_from or not isValid_to:
+            return False
+        moveSuccess = False
+        moved = self.is_piece_moved(src_piece_num)
+        
+
+        if self.checkPieceType(i_from, j_from, PAWN):
+            if not moved:
+                if self.pawn_twostep_move(i_from, j_from, i_to, j_to):
+                    print(colorStr+"폰 두칸 이동")
+                    moveSuccess = True
+                    self.set_piece_moved(src_piece_num, True)
+            if self.pawn_move(i_from, j_from, i_to, j_to):
+                print(colorStr+"폰 이동")
+                moveSuccess = True
+            elif self.pawn_attack(i_from, j_from, i_to, j_to):
+                print(colorStr+"폰 공격")
+                moveSuccess = True
+        elif self.checkPieceType(i_from, j_from, ROOK):
+            if self.rook_move(i_from, j_from, i_to, j_to):
+                print(colorStr+"룩 이동")
+                moveSuccess = True
+            elif self.rook_attack(i_from, j_from, i_to, j_to):
+                print(colorStr+"룩 공격")
+                moveSuccess = True
+
+       
+        # 말이 성공적으로 움직였다면
+        if moveSuccess: 
+            # 말을 움직였다고 보고
+            
+             # 보드 업데이트
+            self.update_board()
+               # 상대편 차례
+            self.nextTurn(moveSuccess)
                 
+    
+    
+    # 폰 첫번째 2칸 움직임
+    def pawn_twostep_move(self, i_from, j_from, i_to, j_to):
+        src_piece = self.get_cell(i_from, j_from)
+        src_piece_color = src_piece[0]
+        target_piece = self.get_cell(i_to, j_to)
+        target_piece_color = target_piece[0]
+        isJPosSame = j_from == j_to
+        isIPosNotSame = i_from != i_to
+        isTargetEmpty = self.board[i_to][j_to] ==  EMPTY 
+        
+        isValid = isJPosSame and isIPosNotSame and isTargetEmpty
+        if isValid:
+            diff = i_to - i_from
+            if self.turn == BLACK:
+                # print("검은 폰 움직임")
+                if diff == 2:
+                    is_ok = True
+                    for di in range(1, diff + 1):
+                        if self.board[i_from + di][j_from] != EMPTY:
+                            is_ok = False
+                            break
+                    if is_ok:
+                        self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
+                        return True
+            # 흰 폰 움직임
+            else:
+                if diff == -2:
+                    is_ok = True
+                    for di in range(1, abs(diff) + 1):
+                        if self.board[i_from - di][j_from] != EMPTY:
+                            is_ok = False
+                            break
+                    if is_ok:
+                        self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
+                        return True
+        return False
+
+
+    # 폰 정상 움직임 함수
+    def pawn_move(self, i_from, j_from, i_to, j_to):
+        src_piece = self.get_cell(i_from, j_from)
+        src_piece_color = src_piece[0]
+        target_piece = self.get_cell(i_to, j_to)
+        target_piece_color = target_piece[0]
+        isJPosSame = j_from == j_to
+        isIPosNotSame = i_from != i_to
+        isTargetEmpty = self.board[i_to][j_to] ==  EMPTY 
+        isValid = isJPosSame and isIPosNotSame and isTargetEmpty
+        if isValid:
+            # 흑일 때는 차이가 양수 1이나 2여야 함
+            diff = i_to - i_from
+            print(diff)
+            if src_piece_color == BLACK:
+                # print("검은 폰 움직임")
+                if diff == 1:
+                    if self.board[i_from + diff][j_from] == EMPTY:
+                        self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
+                        return True
+            # 흰 폰 움직임
+            else:
+                if diff == -1:
+                    if self.board[i_from + diff][j_from] == EMPTY:
+                        self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
+                        return True
+        return False
+
+    # 폰 움직임 함수
+    # pawn_move('b2', 'b4')
+    def pawn_attack(self, i_from, j_from, i_to, j_to):
+        src_piece = self.get_cell(i_from, j_from)
+        src_piece_color = src_piece[0]
+        target_piece = self.get_cell(i_to, j_to)
+        target_piece_color = target_piece[0]
+        diff_i = i_to - i_from
+        diff_j = j_to - j_from
+
+        # 움직임이 대각선인지 체크
+        if abs(diff_i) != 1 or abs(diff_j) != 1:
+            return False
+        # 공격할 대상이 없는지 체크
+        if target_piece == EMPTY:
+            return False
+        # 다른 편인지 체크
+        if  src_piece_color == target_piece_color:
+            return False
+    
+        if src_piece_color == BLACK:
+            if diff_i == 1:
+                print("검은 폰 움직임")
+                print("before: ", self.get_piece_num(src_piece_color, i_from,j_from))
+                self.set_piece_alive(self.get_piece_num(target_piece_color, i_to,j_to), False)
+                self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
+                return True
+        else:
+            if diff_i == -1:
+                print("흰 폰 움직임")
+                print("before: ", self.get_piece_num(src_piece_color, i_from,j_from))
+                self.set_piece_alive(self.get_piece_num(target_piece_color, i_to,j_to), False)
+                self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
+                return True
+
+        return False
 
     def rook_move(self, i_from, j_from, i_to, j_to):
-        src_horse = self.get_cell(i_from, j_from)
-        src_horse_team = src_horse[0]
-        target_horse = self.get_cell(i_to, j_to)
-        target_horse_team = target_horse[0]
-        isTargetMine = src_horse[0] != target_horse[0]
+        src_piece = self.get_cell(i_from, j_from)
+        src_piece_color = src_piece[0]
+        target_piece = self.get_cell(i_to, j_to)
+        target_piece_color = target_piece[0]
+        isTargetMine = src_piece[0] != target_piece[0]
         isHorizontal = i_from == i_to and j_from != j_to
         isVertical = i_from != i_to and j_from == j_to
         isHoriVert = isHorizontal or isVertical
@@ -447,7 +521,7 @@ class Chess:
                 # 경로가 하나라도 비어있지 않다면 바로 종료하여 움직일 수 없도록 한다
                 if self.isHoriClear(i_from, j_from, i_to, j_to):
                     print("이동")
-                    self.set_horse_pos(self.get_horse_num(src_horse_team, i_from,j_from), i_to, j_to)
+                    self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
                     return True
 
 
@@ -457,16 +531,16 @@ class Chess:
                 i_to_before = i_from + (abs(i_to - i_from) - 1) * sign(i_to - i_from)
                 # 마지막 목적지 바로 전까지 경로가 다 비어있는지 검사한다
                 if self.isVertClear(i_from, j_from, i_to, j_to):
-                    self.set_horse_pos(self.get_horse_num(src_horse_team, i_from,j_from), i_to, j_to)
+                    self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
                     return True
         return False
     
     def rook_attack(self, i_from, j_from, i_to, j_to):
-        src_horse = self.get_cell(i_from, j_from)
-        src_horse_team = src_horse[0]
-        target_horse = self.get_cell(i_to, j_to)
-        target_horse_team = target_horse[0]
-        isTargetMine = src_horse[0] != target_horse[0]
+        src_piece = self.get_cell(i_from, j_from)
+        src_piece_color = src_piece[0]
+        target_piece = self.get_cell(i_to, j_to)
+        target_piece_color = target_piece[0]
+        isTargetMine = src_piece[0] != target_piece[0]
         isHorizontal = i_from == i_to and j_from != j_to
         isVertical = i_from != i_to and j_from == j_to
         isHoriVert = isHorizontal or isVertical
@@ -481,12 +555,12 @@ class Chess:
                 # 말을 잡고 목적지로 움직인다
                 if j_from == j_to_before:
                     print("옆의놈먹자")
-                    self.set_horse_alive(self.get_horse_num(target_horse_team, i_to,j_to), False)
-                    self.set_horse_pos(self.get_horse_num(src_horse_team, i_from,j_from), i_to, j_to)
+                    self.set_piece_alive(self.get_piece_num(target_piece_color, i_to,j_to), False)
+                    self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
                     return True
                 elif self.isHoriClear(i_from, j_from, i_to, j_to_before):
-                    self.set_horse_alive(self.get_horse_num(target_horse_team, i_to,j_to), False)
-                    self.set_horse_pos(self.get_horse_num(src_horse_team, i_from,j_from), i_to, j_to)
+                    self.set_piece_alive(self.get_piece_num(target_piece_color, i_to,j_to), False)
+                    self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
                     return True
 
             # 룩이 수직이동하는 경우
@@ -496,13 +570,13 @@ class Chess:
                 # # 마지막 목적지에만 적의 말이 놓여있는 경우
                 # # 말을 잡고 목적지로 움직인다
                 if i_from == i_to_before:
-                    if target_horse[:2] != EMPTY:
-                        self.set_horse_alive(self.get_horse_num(target_horse_team, i_to,j_to), False)
-                    self.set_horse_pos(self.get_horse_num(src_horse_team, i_from,j_from), i_to, j_to)
+                    if target_piece[:2] != EMPTY:
+                        self.set_piece_alive(self.get_piece_num(target_piece_color, i_to,j_to), False)
+                    self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
                     return True
                 elif self.isVertClear(i_from, j_from, i_to_before, j_to):
-                    self.set_horse_alive(self.get_horse_num(target_horse_team, i_to,j_to), False)
-                    self.set_horse_pos(self.get_horse_num(src_horse_team, i_from,j_from), i_to, j_to)
+                    self.set_piece_alive(self.get_piece_num(target_piece_color, i_to,j_to), False)
+                    self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
                     return True
 
 
