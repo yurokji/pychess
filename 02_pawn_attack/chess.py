@@ -1,3 +1,5 @@
+from pickle import TRUE
+from numpy import True_
 import pygame
 from pygame.locals import *
 import math
@@ -137,7 +139,7 @@ class Chess:
 		str_pos =""
 		if self.is_valid_pos_num(i) and self.is_valid_pos_num(j):
 			str_pos = chr(ord('a') + j) + str(CHESS_BOARD_TOTAL_CELLS - i)
-			print(i,j, "-->", str_pos)
+			# print(i,j, "-->", str_pos)
 			return True, str_pos
 		return False, str_pos
 	
@@ -190,7 +192,7 @@ class Chess:
 	def getCurrHorse(self):
 		return self.input.src_horse_type
 
-	def move_horse(self, from_pos_str, to_pos_str):
+	def move(self, from_pos_str, to_pos_str):
 		from_pos_str = from_pos_str.lower()
 		to_pos_str = to_pos_str.lower()
 		if from_pos_str == to_pos_str:
@@ -203,27 +205,32 @@ class Chess:
 
 		isMoved = False
 		if self.checkHorseType(i_from, j_from, PAWN):
-			isMoved = self.move_pawn(i_from, j_from, i_to, j_to)
+			if self.pawn_move(i_from, j_from, i_to, j_to):
+				isMoved = True
+			elif self.pawn_attack(i_from, j_from, i_to, j_to):
+				isMoved = True
 		elif self.checkHorseType(i_from, j_from, ROOK):
-			isMoved = self.move_rook(i_from, j_from, i_to, j_to)
+			if self.rook_move(i_from, j_from, i_to, j_to):
+				isMoved = True
+
 		# 말이 성공적으로 놓여졌다면 상대편 차례
 		self.nextTurn(isMoved)
 				
 	# 폰 움직임 함수
-	# move_pawn('b2', 'b4')
-	def move_pawn(self, i_from, j_from, i_to, j_to):
+	# pawn_move('b2', 'b4')
+	def pawn_move(self, i_from, j_from, i_to, j_to):
 		isJPosSame = j_from == j_to
 		isIPosNotSame = i_from != i_to
 		isTargetEmpty = self.board[i_to][j_to] ==  EMPTY 
 		isValid = isJPosSame and isIPosNotSame and isTargetEmpty
-		print("SRC:", i_from, j_from, "TGT:", i_to, j_to)
-		print("SRC TYPE:", self.turn, self.input.src_horse_type)
+		# print("SRC:", i_from, j_from, "TGT:", i_to, j_to)
+		# print("SRC TYPE:", self.turn, self.input.src_horse_type)
 		if isValid:
 			tempStr = self.board[i_to][j_to]
 			# 흑일 때는 차이가 양수 1이나 2여야 함
 			diff = i_to - i_from
 			if self.turn == BLACK:
-				print("검은 폰 움직임")
+				# print("검은 폰 움직임")
 				if diff >= 1 and diff <= 2:
 					is_ok = True
 					for di in range(1, diff + 1):
@@ -236,7 +243,7 @@ class Chess:
 						return True
 			
 			else:
-				print("흰 폰 움직임")
+				# print("흰 폰 움직임")
 				if diff >= -2 and diff <= -1:
 					is_ok = True
 					for di in range(1, abs(diff) + 1):
@@ -249,11 +256,50 @@ class Chess:
 						return True
 
 		return False
-	
-	def move_rook(self, i_from, j_from, i_to, j_to):
 
-		print("SRC:", i_from, j_from, "TGT:", i_to, j_to)
-		print("SRC TYPE:", self.turn, self.input.src_horse_type, self.input.target_horse_type)
+	# 폰 움직임 함수
+	# pawn_move('b2', 'b4')
+	def pawn_attack(self, i_from, j_from, i_to, j_to):
+		is_killed = False
+		tempStr = self.board[i_to][j_to]
+
+		diff_i = i_to - i_from
+		diff_j = j_to - j_from
+
+		# 움직임이 대각선인지 체크
+		if abs(diff_i) != 1 or abs(diff_j) != 1:
+			return False
+			
+		if self.board[i_to][j_to] == EMPTY:
+			return False
+
+		if  self.board[i_to][j_to][0] == self.input.src_horse_type[0]:
+			return False
+	
+		if self.turn == BLACK:
+			# print("검은 폰 움직임")
+			if diff_i == 1:
+				self.board[i_from][j_from] = EMPTY
+				self.board[i_to][j_to] = self.getCurrHorse()
+				is_killed = True
+		else:
+			# print("흰 폰 움직임")
+			if diff_i == -1:
+				self.board[i_from][j_from] = EMPTY
+				self.board[i_to][j_to] = self.getCurrHorse()	
+				is_killed = True		
+
+		if is_killed:
+			self.inventory[self.turn].append(tempStr)
+			print("inventory", self.inventory[self.turn])
+			return True
+		else:
+			return False
+
+
+	def rook_move(self, i_from, j_from, i_to, j_to):
+		# print("SRC:", i_from, j_from, "TGT:", i_to, j_to)
+		# print("SRC TYPE:", self.turn, self.input.src_horse_type, self.input.target_horse_type)
 		isTargetMine = self.input.src_horse_type[0] != self.input.target_horse_type[0]
 		isHorizontal = i_from == i_to and j_from != j_to
 		isVertical = i_from != i_to and j_from == j_to
@@ -273,9 +319,7 @@ class Chess:
 						if self.board[i_from][j_from + sign(diff) * di] != EMPTY:
 							is_ok = False
 							break
-					else:
-						if self.board[i_from][j_from + sign(diff) * di] != EMPTY:
-							is_killed = True
+
 
 			elif isVertical:
 				diff = i_to - i_from 
@@ -295,17 +339,5 @@ class Chess:
 					self.inventory[self.turn].append(tempStr)
 					print("inventory", self.inventory[self.turn])
 				return True
-		
 		return False
 
-
-
-
-# chess = Chess()
-# # chess.print_board()
-# # chess.set_cell('d3', WHITE+KING)
-# # chess.set_cell('e7', BLACK+KNIGHT)
-# # chess.set_cell('a9', WHITE+PAWN)
-# # chess.print_board()
-# chess.make_init_board()
-# chess.print_board()
