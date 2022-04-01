@@ -342,6 +342,18 @@ class Chess:
                 return False  
         return True       
 
+    # 대각선 방향 경로가 비워져있는지
+    def isDiagClear(self, i_from, j_from, i_to, j_to):
+        diff_i = i_to - i_from 
+        diff_j = j_to - j_from
+        if abs(diff_i) != abs(diff_j):
+            return False
+        sign_i = sign(diff_i)
+        sign_j = sign(diff_j) 
+        for di in range(1, abs(diff_i) + 1):
+            if self.board[i_from + sign_i * di][j_from + sign_j * di] != EMPTY:
+                return False  
+        return True     
 
     def move(self, i_from, j_from, i_to, j_to):
         if i_from == i_to and j_from == j_to:
@@ -385,12 +397,16 @@ class Chess:
             elif self.rook_attack(i_from, j_from, i_to, j_to):
                 print(colorStr+"룩 공격")
                 moveSuccess = True
-
-       
+        elif self.checkPieceType(i_from, j_from, BISHOP):
+            print("비숍 이동 차례")
+            if self.bishop_move(i_from, j_from, i_to, j_to):
+                print(colorStr+"비숍 이동")
+                moveSuccess = True
+            elif self.bishop_attack(i_from, j_from, i_to, j_to):
+                print(colorStr+"비숍 공격")
+                moveSuccess = True
         # 말이 성공적으로 움직였다면
         if moveSuccess: 
-            # 말을 움직였다고 보고
-            
              # 보드 업데이트
             self.update_board()
                # 상대편 차례
@@ -506,11 +522,11 @@ class Chess:
         src_piece_color = src_piece[0]
         target_piece = self.get_cell(i_to, j_to)
         target_piece_color = target_piece[0]
-        isTargetMine = src_piece[0] != target_piece[0]
+        isValidTarget = src_piece[0] != target_piece[0]
         isHorizontal = i_from == i_to and j_from != j_to
         isVertical = i_from != i_to and j_from == j_to
         isHoriVert = isHorizontal or isVertical
-        isValid = isTargetMine and isHoriVert
+        isValid = isValidTarget and isHoriVert
         if isValid:
             # 룩이 수평 이동하는 경우
             if isHorizontal:
@@ -540,11 +556,11 @@ class Chess:
         src_piece_color = src_piece[0]
         target_piece = self.get_cell(i_to, j_to)
         target_piece_color = target_piece[0]
-        isTargetMine = src_piece[0] != target_piece[0]
+        isValidTarget = src_piece[0] != target_piece[0]
         isHorizontal = i_from == i_to and j_from != j_to
         isVertical = i_from != i_to and j_from == j_to
         isHoriVert = isHorizontal or isVertical
-        isValid = isTargetMine and isHoriVert
+        isValid = isValidTarget and isHoriVert
         if isValid:
             # 룩이 수평 이동하는 경우
             if isHorizontal:
@@ -578,12 +594,55 @@ class Chess:
                     self.set_piece_alive(self.get_piece_num(target_piece_color, i_to,j_to), False)
                     self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
                     return True
-
-
-
         return False
 
+    def bishop_move(self, i_from, j_from, i_to, j_to):
+        src_piece = self.get_cell(i_from, j_from)
+        src_piece_color = src_piece[0]
+        target_piece = self.get_cell(i_to, j_to)
+        target_piece_color = target_piece[0]
+        isValidTarget = src_piece_color != target_piece_color
+        diff_i = i_to - i_from 
+        diff_j = j_to - j_from
+        isDiagonal = abs(diff_i) == abs(diff_j)
+        isValid = isValidTarget and isDiagonal
+        if isValid:
+            print("비숍정상적 움직임")
+            if self.isDiagClear(i_from, j_from, i_to, j_to):
+                print("대각선 클리어")
+                self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
+                return True
+        return False
 
+    def bishop_attack(self, i_from, j_from, i_to, j_to):
+        src_piece = self.get_cell(i_from, j_from)
+        src_piece_color = src_piece[0]
+        target_piece = self.get_cell(i_to, j_to)
+        target_piece_color = target_piece[0]
+        isValidTarget = src_piece_color != target_piece_color
+        diff_i = i_to - i_from 
+        diff_j = j_to - j_from
+        sign_i = sign(diff_i)
+        sign_j = sign(diff_j)
+        isDiagonal = abs(diff_i) == abs(diff_j)
+        isValid = isValidTarget and isDiagonal
+        if isValid:
+            # 목적지 도착 직전 위치 계산
+            i_to_before = i_from + (abs(diff_i) - 1) * sign_i
+            j_to_before = j_from + (abs(diff_j) - 1) * sign_j
+            # 다른 경로는 다 비어있고 
+            # 마지막 목적지에만 적의 말이 놓여있는 경우
+            # 말을 잡고 목적지로 움직인다
+            if i_from == i_to_before and j_from == j_to_before:
+                print("옆의놈먹자")
+                self.set_piece_alive(self.get_piece_num(target_piece_color, i_to,j_to), False)
+                self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
+                return True
+            elif self.isDiagClear(i_from, j_from, i_to_before, j_to_before):
+                self.set_piece_alive(self.get_piece_num(target_piece_color, i_to,j_to), False)
+                self.set_piece_pos(self.get_piece_num(src_piece_color, i_from,j_from), i_to, j_to)
+                return True
 
+        return False
 ch = Chess()
 ch.print_board()
