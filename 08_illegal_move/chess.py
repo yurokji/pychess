@@ -60,39 +60,52 @@ class Piece:
         self.__num = num
         self.__alive = True
         self.__moved = False
+        
     def get_type(self):
         return self.__type
+    
     def set_type(self, type):
         self.__type = type
+        
     def get_team(self):
         return self.__team
+    
     def get_pos(self):
         return self.__pos
+    
     def set_pos(self, pos):
         self.__pos = pos
+        
     def set_pos(self, i ,j):
         self.__pos = [i,j]
+        
     def get_num(self):
         return self.__num
+    
     def set_num(self, num):
         self.__num = num
+        
     def get_moved(self):
         return self.__moved
+    
     def set_moved(self, moved):
         self.__moved = moved  
+        
     def get_alive(self):
         return self.__alive
+    
     def set_alive(self, alive):
         self.__alive = alive
 
-
+    
 # 검은색/ 흰색 팀 만들기
 class Team:
     def __init__(self, color):
         self.__team = color
         self.__pieces = []
         self.set_init_pos()
-    
+
+
     # 초기 말의 위치를 정함
     def set_init_pos(self):
         self.__pieces = []
@@ -115,16 +128,17 @@ class Team:
             self.__pieces.append(Piece(self.__team, ROOK, [7, 0],28))
             self.__pieces.append(Piece(self.__team, KNIGHT, [7, 1],29))
             self.__pieces.append(Piece(self.__team, BISHOP, [7, 2],30))
-            self.__pieces.append(Piece(self.__team, QUEEN, [7, 3],31))
-            self.__pieces.append(Piece(self.__team, KING, [7, 4],32))
+            self.__pieces.append(Piece(self.__team, KING, [7, 4],31))
+            self.__pieces.append(Piece(self.__team, QUEEN, [7, 3] ,32))
             self.__pieces.append(Piece(self.__team, BISHOP, [7, 5],33))
             self.__pieces.append(Piece(self.__team, KNIGHT, [7, 6],34))
             self.__pieces.append(Piece(self.__team, ROOK, [7, 7],35))
-    
+
     def get_pieces(self):
         return self.__pieces
     
-        
+    def get_piece(self, piece_num):
+        return self.__pieces[piece_num]
 
 
   
@@ -134,8 +148,8 @@ class Chess:
         self.__board = []
         self.__turn = WHITE
         self.__team = {}
-        self.__team["black"] = Team(BLACK)
-        self.__team["white"] = Team(WHITE)
+        self.__team[BLACK] = Team(BLACK)
+        self.__team[WHITE] = Team(WHITE)
         self.clear_board()
         self.fill_board()
         self.__display = Display()
@@ -203,6 +217,10 @@ class Chess:
             return True
         return False
 
+    def is_valid_pos(self, pos):
+        i = pos[0]
+        j = pos[1]
+        return self.is_valid_pos(i,j)
 
     def is_valid_cell(self, i,j):
         if self.is_valid_pos_str(pos_str):
@@ -223,7 +241,12 @@ class Chess:
     #     else:
     #         return False, -1, -1
 
+    def pos_2_ij(self, pos):
+        i = pos[0]
+        j = pos[1]
+        return i,j
 
+        
     # 픽셀 위치를 -> i, j롤 환산하는 함수
     def pixel_2_pos(self, sx, sy, px, py, stride):
         pad = 0.1
@@ -263,16 +286,16 @@ class Chess:
         return self.__board[i][j][1]
 
     
-    def get_piece_num(self, color, i,j):
+    def get_piece_num(self, color, pos):
         if color == BLACK:
             pieces = self.get_team("black").get_pieces()
         else:
             pieces = self.get_team("white").get_pieces()
-        for piece in pieces:
+        for idx, piece in enumerate(pieces):
             if piece.get_alive():
                 pos_i, pos_j = piece.get_pos()
-                if pos_i == i and pos_j == j:
-                    return piece.get_num()
+                if pos_i == pos[0] and pos_j == pos[1]:
+                    return idx
         return -1
     
     
@@ -287,50 +310,20 @@ class Chess:
                 return piece
             
     
-    def is_piece_moved(self, piece_num):
-        if piece_num < 20:
-            pieces = self.get_team("black").get_pieces()
-        else:
-            pieces = self.get_team("white").get_pieces()
-
-        for piece in pieces:
-            if piece.get_num() == piece_num:
-                return piece.get_moved()
-        return -1
+    def is_piece_moved(self, team, piece_num):
+        return self.get_team(team).get_piece(piece_num).get_moved()
     
-    def set_piece_moved(self, piece_num, moved):
-        if piece_num < 20:
-            pieces = self.get_team("black").get_pieces()
-        else:
-            pieces = self.get_team("white").get_pieces()
+    def set_piece_moved(self, team, piece_num, moved):
+        self.get_team(team).get_piece(piece_num).set_moved(moved)
 
-        for piece in pieces:
-            if piece.get_num() == piece_num:
-                piece.set_moved(moved)
-
-    def get_piece_pos(self, piece_num):
-        if piece_num < 20:
-            pieces = self.get_team("black").get_pieces()
-        else:
-            pieces = self.get_team("white").get_pieces()
-
-        for piece in pieces:
-            if piece.get_num() == piece_num:
-                return piece.get_pos()
-        return -1, -1
+    def get_piece_pos(self, team, piece_num):
+        return self.get_team(team).get_piece(piece_num).get_pos()
     
-    def set_piece_pos(self, piece_num, i_to, j_to):
-        if piece_num < 20:
-            pieces = self.get_team("black").get_pieces()
-        else:
-            pieces = self.get_team("white").get_pieces()
-
-        for piece in pieces:
-            if piece.get_num() == piece_num:
-                piece.set_pos(i_to, j_to)
-                break
+    def set_piece_pos(self, team, piece_num, pos):
+        self.get_team(team).get_piece(piece_num).set_pos(pos)
    
    
+    
     def set_piece_alive(self, piece_num, alive):
         if piece_num < 20:
             pieces = self.get_team("black").get_pieces()
@@ -355,11 +348,13 @@ class Chess:
     
     def get_cell(self, pos):
         return self.__board[pos[0]][pos[1]]
+    
     def get_cell(self, i, j):
         return self.__board[i][j]
     
     def set_cell(self, colorStr, typeStr, i, j, num):
         self.__board[i][j] =  colorStr + typeStr + "{:02d}".format(num) 
+        
     def set_cell(self, colorStr, typeStr, pos, num):
         self.__board[pos[0]][pos[1]] =  colorStr + typeStr + "{:02d}".format(num) 
 
@@ -388,60 +383,82 @@ class Chess:
         self.fill_board()
         # self.__print_board()
         
-    def nextTurn(self):
-        if self.__turn == WHITE:
-            self.__turn = BLACK
+    def get_turn(self):
+        return self.__turn
+    
+    def set_turn(self, turn):
+        self.__turn = turn
+        
+    def next_turn(self):
+        if self.get_turn == WHITE:
+            return self.set_turn(BLACK)
         else:
-            self.__turn = WHITE
+            return self.set_turn(WHITE)
 
-    def checkPieceType(self, i, j, PIECETYPE):
-        return PIECETYPE == self.get_piece_type(i,j)
-
-    def is_horizontal_clear(self, i_from, j_from, i_to, j_to):
-        diff = j_to - j_from 
-        for di in range(1, abs(diff) + 1):
-            if self.__board[i_from][j_from + sign(diff) * di] != EMPTY:
+    def is_horizontal_clear(self, pos_from, pos_to):
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
+        diff_j = j_to - j_from 
+        for di in range(1, abs(diff_j) + 1):
+            if self.get_cell(i_from, j_from + sign(diff_j) * di) != EMPTY:
                 return False
         return True
     
-    def is_vertical_clear(self, i_from, j_from, i_to, j_to):
-        diff = i_to - i_from 
-        for di in range(1, abs(diff) + 1):
-            if self.__board[i_from + sign(diff) * di][j_from] != EMPTY:
+    def is_vertical_clear(self, pos_from, pos_to):
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
+        diff_i = i_to - i_from 
+        for di in range(1, abs(diff_i) + 1):
+            if self.get_cell(i_from + sign(diff_i) * di, j_from) != EMPTY:
                 return False  
         return True       
 
     # 대각선 방향 경로가 비워져있는지
-    def is_diagonal_clear(self, i_from, j_from, i_to, j_to):
+    def is_diamovenal_clear(self, pos_from, pos_to):
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
         diff_i = i_to - i_from 
-        diff_j = j_to - j_from
+        diff_j = j_to - j_from 
         if abs(diff_i) != abs(diff_j):
             return False
         sign_i = sign(diff_i)
         sign_j = sign(diff_j) 
         for di in range(1, abs(diff_i) + 1):
-            if self.__board[i_from + sign_i * di][j_from + sign_j * di] != EMPTY:
+            if self.get_cell(i_from + sign_i * di, j_from + sign_j * di) != EMPTY:
                 return False  
         return True     
 
 
+    def is_pos_same(self, pos1, pos2):
+        if pos1[0] == pos2[0] and pos1[1] == pos2[1]:
+            return False
 
-    def move(self, i_from, j_from, i_to, j_to):
-        print("출발지:",  i_from, j_from, "목적지:", i_to, j_to)
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        src_piece_num = self.get_piece_num(src_piece_team,i_from, j_from)
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        target_piece_num = self.get_piece_num(target_piece_team,i_to, j_to)
+
+    def put(self, pos_from, pos_to):
+        is_two_pos_same = self.is_pos_same(pos_from, pos_to)
+        is_not_valid_pos_from = not self.is_valid_pos(pos_from)
+        is_not_valid_pos_to = not self.is_valid_pos(pos_to)
+        
+        if is_two_pos_same or is_not_valid_pos_from or is_not_valid_pos_to:
+            return False
+        
+        src_cell = self.get_cell(pos_from)
+        src_cell_team = src_cell[0]
+        src_piece_num = self.get_piece_num(src_cell_team, pos_from)
+        target_cell = self.get_cell(pos_to)
+        target_cell_team = target_cell[0]
+        target_piece_num = self.get_piece_num(target_cell_team, pos_to)
+        
+        is_not_my_turn = src_cell_team != self.get_turn()
+        is_not_valid_teams = src_cell_team == target_cell_team
+        if is_not_my_turn or is_not_valid_teams:
+            return False
+        
         isMoved = False
         isKilled = False
-        if self.empty_move(i_from, j_from, i_to, j_to):
-            
+        if self.move(src_piece_num, target_piece_num, pos_from, pos_to):
             isMoved = True
-        elif self.kill_move(i_from, j_from, i_to, j_to):
-            self.set_piece_alive(target_piece_num, False)
-            self.set_piece_pos(src_piece_num, i_to, j_to)
+        elif self.attack(src_piece_num, target_piece_num, pos_from, pos_to):
             isKilled = True
         # 허용되지 않은 수(illegal move)를 판단하는 부분:
         # (킹을 포함한) 자신의 어떤 기물이라도
@@ -461,434 +478,334 @@ class Chess:
                 return True
         return False
  
-    def empty_move(self, i_from, j_from, i_to, j_to):
-        if i_from == i_to and j_from == j_to:
+ 
+ ####################단순 기물 이동 부분#############################
+    def move(self, src_piece_num, target_piece_num, pos_from, pos_to):
+        is_target_filled = self.get_cell(pos_to) !=  EMPTY 
+        if is_target_filled:
             return False
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        src_piece_num = self.get_piece_num(src_piece_team,i_from, j_from)
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        target_piece_num = self.get_piece_num(target_piece_team,i_to, j_to)
-        if src_piece_team == target_piece_team:
-            return False
-        
-        colorStr = ""
-        if src_piece_team == BLACK:
-            colorStr = "검은색"
-        else:
-            colorStr = "흰색"
-            
-        isSrcTurn = (self.__turn == src_piece_team)
-        isValid_from = self.is_valid_pos(i_from, j_from)
-        isValid_to = self.is_valid_pos(i_to, j_to)
-        if not isSrcTurn or not isValid_from or not isValid_to:
-            return False
-
-        moved = self.is_piece_moved(src_piece_num)
-        if self.checkPieceType(i_from, j_from, PAWN):
-            if not moved:
-                if self.pawn_twostep_move(i_from, j_from, i_to, j_to):
+        src_team = self.get_turn()
+        src_piece = self.get_team(src_team).get_piece(src_piece_num)
+        src_piece_moved = src_piece.get_moved()
+        src_piece_type = src_piece.get_type()
+        if src_piece_type == PAWN:
+            if not src_piece_moved:
+                if self.pawn_twostep_move(src_piece, pos_to):
                     return True         
-                elif self.pawn_move(i_from, j_from, i_to, j_to):
+                elif self.pawn_move(src_piece, pos_to):
                     return True
-        elif self.checkPieceType(i_from, j_from, ROOK):
-            if self.rook_move(i_from, j_from, i_to, j_to):
+        elif src_piece_type == ROOK:
+            if self.rook_move(src_piece, pos_to):
                 return True
-        elif self.checkPieceType(i_from, j_from, BISHOP):
-            if self.bishop_move(i_from, j_from, i_to, j_to):
+        elif src_piece_type == BISHOP:
+            if self.bishop_move(src_piece, pos_to):
                 return True
-        elif self.checkPieceType(i_from, j_from, KNIGHT):
-            if self.knight_move(i_from, j_from, i_to, j_to):
+        elif src_piece_type == KNIGHT:
+            if self.knight_move(src_piece, pos_to):
                 return True
-        elif self.checkPieceType(i_from, j_from, QUEEN):
-            if self.queen_move(i_from, j_from, i_to, j_to):
+        elif src_piece_type == QUEEN:
+            if self.queen_move(src_piece, pos_to):
                 return True
-        elif self.checkPieceType(i_from, j_from, KING):
-            if self.king_move(i_from, j_from, i_to, j_to):
+        elif src_piece_type == KING:
+            if self.king_move(src_piece, pos_to):
                 return True
-        print("거젓")
         return False
  
- 
-            
-            
 
-
-    def kill_move(self, i_from, j_from, i_to, j_to, illegal=False):
-        if i_from == i_to and j_from == j_to:
+    def pawn_twostep_move(self, src_piece, pos_to):
+        src_team = src_piece.get_team()
+        pos_from = src_piece.get_pos()
+        isJPosNotSame = pos_from[1] != pos_to[1]
+        isIPosSame = pos_from[0] == pos_to[0]
+        if isJPosNotSame or isIPosSame:
             return False
-
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        src_piece_num = self.get_piece_num(src_piece_team,i_from, j_from)
-        src_piece_type = self.get_piece(src_piece_num).get_type()
-        print("기물 분류:", src_piece_type)
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        target_piece_num = self.get_piece_num(target_piece_team,i_to, j_to)
-        if src_piece_team == target_piece_team:
-            return False
-        
-        isValid_from = self.is_valid_pos(i_from, j_from)
-        isValid_to = self.is_valid_pos(i_to, j_to)
-        print(src_piece_team, target_piece_team, isValid_from,isValid_to)
-        if not isValid_from or not isValid_to:
-            return False
-        
-        if self.checkPieceType(i_from, j_from, PAWN):
-            if self.pawn_attack(i_from, j_from, i_to, j_to):
-                return True
-        
-        elif self.checkPieceType(i_from, j_from, ROOK):
-            if self.rook_attack(i_from, j_from, i_to, j_to):
-                return True
-        
-        elif src_piece_type == BISHOP:    
-            if self.bishop_attack(i_from, j_from, i_to, j_to):
-                return True
-
-        elif src_piece_type == KNIGHT:    
-            print("아임 어택킹 킹킹킹")
-            if self.knight_attack(i_from, j_from, i_to, j_to):
-                return True
-        elif self.checkPieceType(i_from, j_from, QUEEN):
-            if self.queen_attack(i_from, j_from, i_to, j_to):
-                return True
-        elif self.checkPieceType(i_from, j_from, KING):
-            if self.king_attack(i_from, j_from, i_to, j_to):
-                return True
-        
-        return False
-    
-
-
-
-
-                
-    
-    
-    # 폰 첫번째 2칸 움직임
-    def pawn_twostep_move(self, i_from, j_from, i_to, j_to):
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        src_num = self.get_piece_num(src_piece_team, i_from, j_from)
-        target_num = self.get_piece_num(target_piece_team, i_to, j_to)
-        print("소스넘버",src_num, "타겟넘버", target_num)
-        isJPosSame = j_from == j_to
-        isIPosNotSame = i_from != i_to
-        isTargetEmpty = self.__board[i_to][j_to] ==  EMPTY 
-        
-        isValid = isJPosSame and isIPosNotSame and isTargetEmpty
-        if isValid:
-            diff = i_to - i_from
-            if self.__turn == BLACK:
-                # print("검은 폰 움직임")
-                if diff == 2:
-                    is_ok = True
-                    for di in range(1, diff + 1):
-                        if self.__board[i_from + di][j_from] != EMPTY:
-                            is_ok = False
-                            break
-                    if is_ok:
-                        return True
-            # 흰 폰 움직임
-            else:
-                if diff == -2:
-                    is_ok = True
-                    for di in range(1, abs(diff) + 1):
-                        if self.__board[i_from - di][j_from] != EMPTY:
-                            is_ok = False
-                            break
-                    if is_ok:
-                        return True
-        return False
-
-
-    # 폰 정상 움직임 함수
-    def pawn_move(self, i_from, j_from, i_to, j_to):
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        src_num = self.get_piece_num(src_piece_team, i_from, j_from)
-        target_num = self.get_piece_num(target_piece_team, i_to, j_to)
-        print("소스넘버",src_num, "타겟넘버", target_num)
-        isJPosSame = j_from == j_to
-        isIPosNotSame = i_from != i_to
-        isTargetEmpty = self.__board[i_to][j_to] ==  EMPTY 
-        isValid = isJPosSame and isIPosNotSame and isTargetEmpty
-        if isValid:
-            # 흑일 때는 차이가 양수 1이나 2여야 함
-            diff = i_to - i_from
-            # print(diff)
-            if src_piece_team == BLACK:
-                # print("검은 폰 움직임")
-                if diff == 1:
-                    if self.__board[i_from + diff][j_from] == EMPTY:
-                        return True
-            # 흰 폰 움직임
-            else:
-                if diff == -1:
-                    if self.__board[i_from + diff][j_from] == EMPTY:
-                        return True
-        return False
-
-    # 폰 움직임 함수
-    # pawn_move('b2', 'b4')
-    def pawn_attack(self, i_from, j_from, i_to, j_to):
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        src_num = self.get_piece_num(src_piece_team, i_from, j_from)
-        target_num = self.get_piece_num(target_piece_team, i_to, j_to)
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
         diff_i = i_to - i_from
-        diff_j = j_to - j_from
-
-        # 움직임이 대각선인지 체크
-        if abs(diff_i) != 1 or abs(diff_j) != 1:
-            return False
-        # 공격할 대상이 없는지 체크
-        if target_piece == EMPTY:
-            return False
-        # 다른 편인지 체크
-        if  src_piece_team == target_piece_team:
-            return False
-    
-        if src_piece_team == BLACK:
-            if diff_i == 1:
+        if src_team == BLACK and diff_i == 2:
+            is_ok = True
+            for di in range(1, diff_i + 1):
+                if self.get_cell(i_from + di, j_from) != EMPTY:
+                    is_ok = False
+                    break
+            if is_ok:
                 return True
-        else:
-            if diff_i == -1:
+        elif src_team == WHITE and diff_i == -2:
+            is_ok = True
+            for di in range(1, abs(diff_i) + 1):
+                if self.get_cell(i_from - di, j_from) != EMPTY:
+                    is_ok = False
+                    break
+            if is_ok:
                 return True
-
         return False
-
-    def rook_move(self, i_from, j_from, i_to, j_to):
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        isValidTarget = src_piece[0] != target_piece[0]
+    def pawn_move(self, src_piece, pos_to):
+        src_team = src_piece.get_team()
+        pos_from = src_piece.get_pos()
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
+        isJPosNotSame = j_from != j_to
+        isIPosSame = i_from == i_to
+        if isJPosNotSame or isIPosSame:
+            return False
+        diff_i = i_to - i_from
+        if (src_team == BLACK and diff_i == 1) or \
+            (src_team == WHITE and diff_i == -1):
+            if self.get_cell(i_from + diff_i, j_from) == EMPTY:
+                return True
+        return False
+    
+    def rook_move(self, src_piece, pos_to):
+        src_team = src_piece.get_team()
+        pos_from = src_piece.get_pos()
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
         isHorizontal = i_from == i_to and j_from != j_to
         isVertical = i_from != i_to and j_from == j_to
-        isHoriVert = isHorizontal or isVertical
-        isValid = isValidTarget and isHoriVert
-        if isValid:
-            # 룩이 수평 이동하는 경우
-            if isHorizontal:
-                # 목적지 도착 직전 위치 계산
-                j_to_before = j_from + (abs(j_to - j_from) - 1) * sign(j_to - j_from)
-                # print("j_to_before",j_to_before)
-                # 마지막 목적지 바로 전까지 경로가 다 비어있는지 검사한다
-                # 경로가 하나라도 비어있지 않다면 바로 종료하여 움직일 수 없도록 한다
-                if self.is_horizontal_clear(i_from, j_from, i_to, j_to):
-                    return True
-
-
-            # 룩이 수직이동하는 경우
-            elif isVertical:
-                # 목적지 도착 직전 위치 계산
-                i_to_before = i_from + (abs(i_to - i_from) - 1) * sign(i_to - i_from)
-                # 마지막 목적지 바로 전까지 경로가 다 비어있는지 검사한다
-                if self.is_vertical_clear(i_from, j_from, i_to, j_to):
-                    return True
+        if not isHorizontal or not isVertical:
+            return False
+        # 룩이 수평 이동하는 경우
+        if isHorizontal:
+            if self.is_horizontal_clear(pos_from, pos_to):
+                return True
+        # 룩이 수직이동하는 경우
+        elif isVertical:
+            if self.is_vertical_clear(pos_from, pos_to):
+                return True
         return False
     
-    def rook_attack(self, i_from, j_from, i_to, j_to):
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        src_num = self.get_piece_num(src_piece_team, i_from, j_from)
-        target_num = self.get_piece_num(target_piece_team, i_to, j_to)
-        print("소스넘버",src_num, "타겟넘버", target_num)
-        isValidTarget = src_piece[0] != target_piece[0]
-        isHorizontal = i_from == i_to and j_from != j_to
-        isVertical = i_from != i_to and j_from == j_to
-        isHoriVert = isHorizontal or isVertical
-        isValid = isValidTarget and isHoriVert
-        if isValid:
-            # 룩이 수평 이동하는 경우
-            if isHorizontal:
-                # 목적지 도착 직전 위치 계산
-                j_to_before = j_from + (abs(j_to - j_from) - 1) * sign(j_to - j_from)
-                # 다른 경로는 다 비어있고 
-                # 마지막 목적지에만 적의 말이 놓여있는 경우
-                # 말을 잡고 목적지로 움직인다
-                if j_from == j_to_before:
-                    # print("옆의놈먹자")
-                    return True
-                elif self.is_horizontal_clear(i_from, j_from, i_to, j_to_before):
-                    return True
-
-            # 룩이 수직이동하는 경우
-            elif isVertical:
-                # 목적지 도착 직전 위치 계산
-                i_to_before = i_from + (abs(i_to - i_from) - 1) * sign(i_to - i_from)
-                # # 마지막 목적지에만 적의 말이 놓여있는 경우
-                # # 말을 잡고 목적지로 움직인다
-                if i_from == i_to_before:
-                    return True
-                elif self.is_vertical_clear(i_from, j_from, i_to_before, j_to):
-                    return True
-        return False
-
-    def bishop_move(self, i_from, j_from, i_to, j_to):
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        isValidTarget = src_piece_team != target_piece_team
+    def bishop_move(self, src_piece, pos_to):
+        src_team = src_piece.get_team()
+        pos_from = src_piece.get_pos()
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
         diff_i = i_to - i_from 
         diff_j = j_to - j_from
-        isDiagonal = abs(diff_i) == abs(diff_j)
-        isValid = isValidTarget and isDiagonal
-        if isValid:
-            if self.is_diagonal_clear(i_from, j_from, i_to, j_to):
-                return True
-        return False
-
-    def bishop_attack(self, i_from, j_from, i_to, j_to):
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        isValidTarget = src_piece_team != target_piece_team
-        diff_i = i_to - i_from 
-        diff_j = j_to - j_from
-        sign_i = sign(diff_i)
-        sign_j = sign(diff_j)
-        isDiagonal = abs(diff_i) == abs(diff_j)
-        isValid = isValidTarget and isDiagonal
-        if isValid:
-            print("asdfasdssssssssssssssssssf")
-            # 목적지 도착 직전 위치 계산
-            i_to_before = i_from + (abs(diff_i) - 1) * sign_i
-            j_to_before = j_from + (abs(diff_j) - 1) * sign_j
-            # 다른 경로는 다 비어있고 
-            # 마지막 목적지에만 적의 말이 놓여있는 경우
-            # 말을 잡고 목적지로 움직인다
-            if i_from == i_to_before and j_from == j_to_before:
-                return True
-            elif self.is_diagonal_clear(i_from, j_from, i_to_before, j_to_before):
-                return True
-
+        isNotDiamovenal = abs(diff_i) != abs(diff_j)
+        if isNotDiamovenal:
+            return False
+        if self.is_diamovenal_clear(pos_from, pos_to):
+            return True
         return False
     
-    
-    def knight_move(self, i_from, j_from, i_to, j_to):
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        src_piece_num = self.get_piece_num(src_piece_team, i_from,j_from)
-        target_piece_num = self.get_piece_num(target_piece_team, i_to,j_to)
-        isValidTarget = src_piece_team != target_piece_team
+    def knight_move(self, src_piece, pos_to):
+        src_team = src_piece.get_team()
+        pos_from = src_piece.get_pos()
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
         diff_i = i_to - i_from 
         diff_j = j_to - j_from
         move_cond1 =  abs(diff_i) >= 1 and abs(diff_i) << 2 
         move_cond2 =  abs(diff_j) >= 1 and abs(diff_j) << 2
         move_cond3 = (abs(diff_i) + abs(diff_j)) == 3
-        if isValidTarget and move_cond1 and move_cond2 and move_cond3:
-            if self.get_cell(i_to, j_to) == EMPTY:
-                return True  
-
-    def knight_attack(self, i_from, j_from, i_to, j_to):
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        src_piece_num = self.get_piece_num(src_piece_team, i_from,j_from)
-        target_piece_num = self.get_piece_num(target_piece_team, i_to,j_to)
-        target_piece = self.get_piece(target_piece_num)
-        
-        isValidTarget = src_piece_team != target_piece_team
-        diff_i = i_to - i_from 
-        diff_j = j_to - j_from
-        move_cond1 =  abs(diff_i) >= 1 and abs(diff_i) <= 2 
-        move_cond2 =  abs(diff_j) >= 1 and abs(diff_j) <= 2
-        move_cond3 = (abs(diff_i) + abs(diff_j)) == 3
-        if isValidTarget and move_cond1 and move_cond2 and move_cond3:
-            if self.get_cell(i_to, j_to) != EMPTY:
-                return True 
-            
-           
-    def queen_move(self, i_from, j_from, i_to, j_to):
-        if self.rook_move(i_from, j_from, i_to, j_to):
+        if not move_cond1 or not move_cond2 or not move_cond3:
+            return False
+        return True  
+    
+    def queen_move(self, src_piece, pos_to):
+        if self.rook_move(src_piece, pos_to):
             return True
-        elif self.bishop_move(i_from, j_from, i_to, j_to):
+        elif self.bishop_move(src_piece, pos_to):
             return True
         return False
-       
-    def queen_attack(self, i_from, j_from, i_to, j_to):
-        if self.rook_attack(i_from, j_from, i_to, j_to):
-            return True
-        elif self.bishop_attack(i_from, j_from, i_to, j_to):
-            return True
-        return False             
-
-    def king_move(self, i_from, j_from, i_to, j_to):
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        src_num = self.get_piece_num(src_piece_team, i_from, j_from)
-        target_num = self.get_piece_num(target_piece_team, i_to, j_to)
-        my_piece = self.get_piece(src_num)
-        print("소스넘버",src_num, "타겟넘버", target_num)
-        diff_i = i_to - i_from
+    
+    def king_move(self, src_piece, pos_to):
+        src_team = src_piece.get_team()
+        pos_from = src_piece.get_pos()
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
+        diff_i = i_to - i_from 
         diff_j = j_to - j_from
         num_steps = (abs(diff_i) + abs(diff_j))
         isOneStep = num_steps == 1
         isTwoDiagStep = (abs(diff_i) == abs(diff_j)) and num_steps == 2
         if isOneStep or isTwoDiagStep:
-            if self.get_cell(i_to, j_to) == EMPTY:
+            return True
+        return False
+
+
+
+
+
+
+
+
+
+
+####################기물 공격 부분#############################
+    def attack(self, src_piece_num, target_piece_num, pos_from, pos_to):
+        is_target_empty = self.get_cell(pos_to) ==  EMPTY 
+        if is_target_empty:
+            return False
+        src_team = self.get_turn()
+        src_piece = self.get_team(src_team).get_piece(src_piece_num)
+        src_piece_moved = src_piece.get_moved()
+        src_piece_type = src_piece.get_type()
+        target_team = self.next_turn()
+        target_piece = self.get_team(target_team).get_piece(target_piece_num)
+        if src_piece_type == PAWN:
+            if self.pawn_attack(src_piece, target_piece):
+                return True
+        elif src_piece_type == ROOK:
+            if self.rook_attack(src_piece, target_piece):
+                return True
+        elif src_piece_type == BISHOP:
+            if self.bishop_attack(src_piece, target_piece):
+                return True
+        elif src_piece_type == KNIGHT:
+            if self.knight_attack(src_piece, target_piece):
+                return True
+        elif src_piece_type == QUEEN:
+            if self.queen_attack(src_piece, target_piece):
+                return True
+        elif src_piece_type == KING:
+            if self.king_attack(src_piece, target_piece):
                 return True
         return False
 
-    def king_attack(self, i_from, j_from, i_to, j_to):
-        src_piece = self.get_cell(i_from, j_from)
-        src_piece_team = src_piece[0]
-        target_piece = self.get_cell(i_to, j_to)
-        target_piece_team = target_piece[0]
-        src_num = self.get_piece_num(src_piece_team, i_from, j_from)
-        target_num = self.get_piece_num(target_piece_team, i_to, j_to)
+
+    def pawn_attack(self, src_piece, target_piece):
+        src_team = src_piece.get_team()
+        pos_from = src_piece.get_pos()
+        pos_to = target_piece.get_pos()
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
         diff_i = i_to - i_from
+        diff_j = j_to - j_from
+        # 움직임이 대각선인지 체크
+        if abs(diff_i) != 1 or abs(diff_j) != 1:
+            return False
+        if (src_team == BLACK and diff_i == 1) or \
+            (src_team == WHITE and diff_i == -1):
+            return True             
+        return False
+       
+    def rook_attack(self, src_piece, target_piece):
+        pos_from = src_piece.get_pos()
+        pos_to = target_piece.get_pos()
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
+        diff_i = i_to - i_from
+        diff_j = j_to - j_from
+
+        isHorizontal = i_from == i_to and j_from != j_to
+        isVertical = i_from != i_to and j_from == j_to
+        if not isHorizontal or not isVertical:
+            return False
+        # 룩이 수평 이동하는 경우
+        if isHorizontal:
+            # 목적지 도착 직전 위치 계산
+            j_to_before = j_from + (abs(j_to - j_from) - 1) * sign(j_to - j_from)
+            # 다른 경로는 다 비어있고 
+            # 마지막 목적지에만 적의 말이 놓여있는 경우
+            # 말을 잡고 목적지로 움직인다
+            if j_from == j_to_before:
+                # print("옆의놈먹자")
+                return True
+            elif self.is_horizontal_clear(pos_from, (pos_to[0], j_to_before)):
+                return True
+
+        # 룩이 수직이동하는 경우
+        elif isVertical:
+            # 목적지 도착 직전 위치 계산
+            i_to_before = i_from + (abs(i_to - i_from) - 1) * sign(i_to - i_from)
+            # # 마지막 목적지에만 적의 말이 놓여있는 경우
+            # # 말을 잡고 목적지로 움직인다
+            if i_from == i_to_before:
+                return True
+            elif self.is_vertical_clear(pos_from, (i_to_before, pos_to[1])):
+                return True
+        return False   
+   
+    def bishop_attack(self, src_piece, target_piece):
+        pos_from = src_piece.get_pos()
+        pos_to = target_piece.get_pos()
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
+        diff_i = i_to - i_from
+        diff_j = j_to - j_from
+        sign_i = sign(diff_i)
+        sign_j = sign(diff_j)
+        isNotDiamovenal = abs(diff_i) != abs(diff_j)
+        if isNotDiamovenal:
+            return False
+        i_to_before = i_from + (abs(diff_i) - 1) * sign_i
+        j_to_before = j_from + (abs(diff_j) - 1) * sign_j
+        # 다른 경로는 다 비어있고 
+        # 마지막 목적지에만 적의 말이 놓여있는 경우
+        # 말을 잡고 목적지로 움직인다
+        if self.is_pos_same((i_from, j_from), (i_to_before, j_to_before)):
+            return True
+        elif self.is_diamovenal_clear(pos_from, pos_to):
+            return True
+        return False
+   
+    def knight_attack(self, src_piece, target_piece):
+        pos_from = src_piece.get_pos()
+        pos_to = target_piece.get_pos()
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
+        diff_i = i_to - i_from 
+        diff_j = j_to - j_from
+        move_cond1 =  abs(diff_i) >= 1 and abs(diff_i) << 2 
+        move_cond2 =  abs(diff_j) >= 1 and abs(diff_j) << 2
+        move_cond3 = (abs(diff_i) + abs(diff_j)) == 3
+        if not move_cond1 or not move_cond2 or not move_cond3:
+            return False
+        return True  
+    
+       
+    def queen_attack(self, src_piece, target_piece):
+        if self.rook_attack(src_piece, target_piece):
+            return True
+        elif self.bishop_attack(src_piece, target_piece):
+            return True
+        return False             
+
+
+
+    def king_attack(self, src_piece, target_piece):
+        pos_from = src_piece.get_pos()
+        pos_to = target_piece.get_pos()
+        i_from, j_from = self.pos_2_ij(pos_from)
+        i_to, j_to = self.pos_2_ij(pos_to)
+        diff_i = i_to - i_from 
         diff_j = j_to - j_from
         num_steps = (abs(diff_i) + abs(diff_j))
         isOneStep = num_steps == 1
         isTwoDiagStep = (abs(diff_i) == abs(diff_j)) and num_steps == 2
         if isOneStep or isTwoDiagStep:
-            if self.get_cell(i_to, j_to) != EMPTY:
-                return False
-        return False    
+            return True
+        return False
     
     
     # 킹이 옮기는 위치가 공격당할 수 있는 곳인지 확인한다
     def is_my_piece_vulnerable(self, my_team, i_whatif, j_whatif):
-        if my_team == BLACK:
-            enemy_pieces = self.get_team("white").get_pieces()
-        else:
-            enemy_pieces = self.get_team("black").get_pieces()
+
         print("옮기려는 위치:", i_whatif, j_whatif)
         for enemy_piece in enemy_pieces:
             if enemy_piece.get_alive():
                 print(enemy_piece.get_team(), enemy_piece.get_type(), enemy_piece.get_pos())
                 enemy_piece_pos = enemy_piece.get_pos()
-                if self.kill_move(enemy_piece_pos[0],enemy_piece_pos[1], i_whatif, j_whatif, illegal=True):
+                if self.attack(enemy_piece_pos[0],enemy_piece_pos[1], i_whatif, j_whatif, illegal=True):
                     return True
         return False
       
                 
                 
-    def isLegalMove(self,i_from, j_from, i_to, j_to):
-        print("일단여기는 아닌가?")
-        if self.is_my_piece_vulnerable(src_piece_team, i_to, j_to):
-            print("공격당하는 자리이므로 공격 불가")              
+    def is_legal_move(self):
+        if self.get_turn() == BLACK:
+            enemy_pieces = self.get_team("white").get_pieces()
+        else:
+            enemy_pieces = self.get_team("black").get_pieces()
+        # 적의 살아있는 기물이 자신의 킹을 잡을 수 있는지 판단한다
+        # (즉, 체크메이트가 되는 형국인지)
+        my_king_piece = self.get_team(self.get_turn()).get_pieces()
+        for enemy_piece in enemy_pieces:
+            if enemy_piece.get_alive():
+                enemy_piece_pos = enemy_piece.get_pos()
+                if self.attack(enemy_piece_pos[0],enemy_piece_pos[1], i_whatif, j_whatif, illegal=True):
+        
             
 
     

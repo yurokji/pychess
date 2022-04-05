@@ -33,16 +33,14 @@ while chess.getRunning():
     if mouse_clicked:
         mouse_clicked = False
         isValid, mi, mj = chess.pixel_2_pos(CHESS_BOARD_PADDING, CHESS_BOARD_PADDING, mx, my, CHESS_BOARD_CELL_PIXELS)
-        print(isValid, mi, mj)
         if not isValid:
             mouse_pressed = False
             is_src_set = False
             is_target_set = False
             continue
         else:
-            print(isValid, mi, mj)
             if not is_src_set:
-                src_i, src_j = (mi, mj)
+                src_pos = (mi, mj)
                 src_rect = (mj * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, \
             mi * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, \
                 CHESS_BOARD_CELL_PIXELS, CHESS_BOARD_CELL_PIXELS)
@@ -50,20 +48,19 @@ while chess.getRunning():
                 src_piece_type = chess.get_cell(mi,mj)
                 is_src_set = True
             else:
-                target_i, target_j = (mi, mj)
+                target_pos = (mi, mj)
                 target_rect = (mj * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, \
             mi * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, \
                 CHESS_BOARD_CELL_PIXELS, CHESS_BOARD_CELL_PIXELS)
                 target_piece_type = chess.get_cell(mi,mj)
                 is_target_set = True
         if is_src_set and is_target_set:
-            print("출발지:",  src_i, src_j, "목적지:", target_i, target_j)
-            if chess.move(src_i, src_j, target_i, target_j):
+            if chess.put(src_pos, target_pos):
             # 말이 성공적으로 움직였다면
                 # 보드 업데이트
                 chess.update_board()
                 # 상대편 차례
-                chess.nextTurn()
+                chess.set_turn(chess.next_turn())
             is_src_set = False
             is_target_set = False
 
