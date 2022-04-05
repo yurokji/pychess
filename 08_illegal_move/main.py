@@ -45,22 +45,25 @@ while chess.getRunning():
             mi * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, \
                 CHESS_BOARD_CELL_PIXELS, CHESS_BOARD_CELL_PIXELS)
                 
-                src_piece_type = chess.get_cell(mi,mj)
+                src_piece_type = chess.get_cell_from_board(src_pos)
                 is_src_set = True
             else:
                 target_pos = (mi, mj)
                 target_rect = (mj * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, \
             mi * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, \
                 CHESS_BOARD_CELL_PIXELS, CHESS_BOARD_CELL_PIXELS)
-                target_piece_type = chess.get_cell(mi,mj)
+                target_piece_type = chess.get_cell_from_board(target_pos)
                 is_target_set = True
         if is_src_set and is_target_set:
             if chess.put(src_pos, target_pos):
             # 말이 성공적으로 움직였다면
                 # 보드 업데이트
+                print(chess.get_turn())
                 chess.update_board()
+                chess.print_board()
                 # 상대편 차례
                 chess.set_turn(chess.next_turn())
+                print(chess.get_turn())
             is_src_set = False
             is_target_set = False
 
@@ -85,8 +88,8 @@ while chess.getRunning():
     # drawing the pieces
     for N in range(CHESS_NUM_CELLS):
         for M in range(CHESS_NUM_CELLS):
-            cell_team = chess.get_cell(N,M)[0]
-            cell_type = chess.get_cell(N,M)[1]
+            cell_team = chess.get_cell_from_board((N,M))[0]
+            cell_type = chess.get_cell_from_board((N,M))[1]
             sprite_num = -1
             if cell_type == KING:
                 sprite_num = 0

@@ -76,8 +76,6 @@ class Piece:
     def set_pos(self, pos):
         self.__pos = pos
         
-    def set_pos(self, i ,j):
-        self.__pos = [i,j]
         
     def get_num(self):
         return self.__num
@@ -134,7 +132,7 @@ class Team:
             self.__pieces.append(Piece(self.__team, KNIGHT, [7, 6],34))
             self.__pieces.append(Piece(self.__team, ROOK, [7, 7],35))
 
-    def get_pieces(self):
+    def get_all_pieces(self):
         return self.__pieces
     
     def get_piece(self, piece_num):
@@ -196,55 +194,26 @@ class Chess:
         self.__board = []
         self.__turn = WHITE
         self.__team = {}
-        self.__team["black"] = Team(BLACK)
-        self.__team["white"] = Team(WHITE)
+        self.__team[BLACK] = Team(BLACK)
+        self.__team[WHITE] = Team(WHITE)
         self.clear_board()
         self.fill_board()
         self.__display = Display()
         self.__running = True
     
-
-    def is_valid_pos_str(self, pos_str):
-        if len(pos_str) != 2:
-            return False
-        else:
-            if ord(pos_str[0]) >= ord('a') and ord(pos_str[0]) <= ord('h'):
-                if int(pos_str[1]) >= 1 and int(pos_str[1]) <= 8:
-                    return True
-
-    def is_valid_pos(self, i, j):
-        if (i >= 0 and i <= 7) and (j >= 0 and j <= 7):
-            return True
-        return False
-
-    def is_valid_pos(self, pos):
-        i = pos[0]
-        j = pos[1]
-        return self.is_valid_pos(i,j)
-
-    def is_valid_cell(self, i,j):
-        if self.is_valid_pos_str(pos_str):
-            i = CHESS_NUM_CELLS - int(pos_str[1])
-            j = ord(pos_str[0]) - ord('a')
-            return True, i, j
-        else:
-            return False, -1, -1
-        
-
-    # # 변환 'a8' --> (i=0, j=0)
-    # # 변환 'b7' --> (i=1, j=1)
-    # def posStr2Num(self, pos_str):
-    #     if self.is_valid_pos_str(pos_str):
-    #         i = CHESS_NUM_CELLS - int(pos_str[1])
-    #         j = ord(pos_str[0]) - ord('a')
-    #         return True, i, j
-    #     else:
-    #         return False, -1, -1
-
     def pos_2_ij(self, pos):
         i = pos[0]
         j = pos[1]
         return i,j
+    
+
+    def is_valid_pos(self, pos):
+        i, j = self.pos_2_ij(pos)
+        if (i >= 0 and i <= 7) and (j >= 0 and j <= 7):
+            return True
+
+
+
 
         
     # 픽셀 위치를 -> i, j롤 환산하는 함수
@@ -269,28 +238,12 @@ class Chess:
         return False, i_upper, j_left
 
 
-    #) 예 -> pos_2_str(i=1, j=1) --> 'b7'
-    def pos_2_str(self, i, j):
-        str_pos =""
-        if self.is_valid_pos(i) and self.is_valid_pos(j):
-            str_pos = chr(ord('a') + j) + str(CHESS_NUM_CELLS - i)
-            # print(i,j, "-->", str_pos)
-            return True, str_pos
-        return False, str_pos
     
-    
-    def get_piece_team(self, i, j):
-        return self.__board[i][j][0]
-    
-    def get_piece_type(self, i,j):
-        return self.__board[i][j][1]
-
-    
-    def get_piece_num(self, color, pos):
+    def get_piece_num_from_board(self, color, pos):
         if color == BLACK:
-            pieces = self.get_team("black").get_pieces()
+            pieces = self.get_team(BLACK).get_all_pieces()
         else:
-            pieces = self.get_team("white").get_pieces()
+            pieces = self.get_team(WHITE).get_all_pieces()
         for idx, piece in enumerate(pieces):
             if piece.get_alive():
                 pos_i, pos_j = piece.get_pos()
@@ -299,89 +252,25 @@ class Chess:
         return -1
     
     
-    def get_piece(self, piece_num):
-        if piece_num < 20:
-            pieces = self.get_team("black").get_pieces()
-        else:
-            pieces = self.get_team("white").get_pieces()
-
-        for piece in pieces:
-            if piece.get_num() == piece_num:
-                return piece
-            
-    
-    def is_piece_moved(self, team, piece_num):
-        return self.get_team(team).get_piece(piece_num).get_moved()
-    
-    def set_piece_moved(self, team, piece_num, moved):
-        self.get_team(team).get_piece(piece_num).set_moved(moved)
-
-    def get_piece_pos(self, team, piece_num):
-        return self.get_team(team).get_piece(piece_num).get_pos()
-    
-    def set_piece_pos(self, team, piece_num, pos):
-        self.get_team(team).get_piece(piece_num).set_pos(pos)
-   
-   
-    
-    def set_piece_alive(self, piece_num, alive):
-        if piece_num < 20:
-            pieces = self.get_team("black").get_pieces()
-        else:
-            pieces = self.get_team("white").get_pieces()
-
-        for piece in pieces:
-            if piece.get_num() == piece_num:
-                piece.set_alive(alive)
-                break
-
-
-    def get_piece_alive(self, piece_num):
-        if piece_num < 20:
-            pieces = self.get_team("black").get_pieces()
-        else:
-            pieces = self.get_team("white").get_pieces()
-
-        for piece in pieces:
-            if piece.get_num() == piece_num:
-                return piece.get_alive()
-    
-    def get_cell(self, pos):
+    def get_cell_from_board(self, pos):
         return self.__board[pos[0]][pos[1]]
-    
-    def get_cell(self, i, j):
-        return self.__board[i][j]
-    
-    def set_cell(self, colorStr, typeStr, i, j, num):
-        self.__board[i][j] =  colorStr + typeStr + "{:02d}".format(num) 
-        
-    def set_cell(self, colorStr, typeStr, pos, num):
+
+    def set_cell_into_board(self, colorStr, typeStr, pos, num):
         self.__board[pos[0]][pos[1]] =  colorStr + typeStr + "{:02d}".format(num) 
-
     
-    # def set_cell(self, pos_str, piece_type_str):
-    #     isValid, i, j  = self.__posStr2Num(pos_str)
-    #     if isValid:
-    #         self.__board[i][j] = piece_type_str
-    #         return True
-    #     return False
-
     def fill_board(self):
-        pieces = self.get_team("black").get_pieces()
+        pieces = self.get_team(BLACK).get_all_pieces()
         for piece in pieces:
             if piece.get_alive():
-                self.set_cell(piece.get_team(), piece.get_type(), piece.get_pos(), piece.get_num())
-        pieces = self.get_team("white").get_pieces()
+                self.set_cell_into_board(piece.get_team(), piece.get_type(), piece.get_pos(), piece.get_num())
+        pieces = self.get_team(WHITE).get_all_pieces()
         for piece in pieces:
             if piece.get_alive():
-                self.set_cell(piece.get_team(), piece.get_type(), piece.get_pos(), piece.get_num())
+                self.set_cell_into_board(piece.get_team(), piece.get_type(), piece.get_pos(), piece.get_num())
 
     def update_board(self):
         self.clear_board()
-        # print("cleared")
-        # self.__print_board()
         self.fill_board()
-        # self.__print_board()
         
     def get_turn(self):
         return self.__turn
@@ -390,17 +279,17 @@ class Chess:
         self.__turn = turn
         
     def next_turn(self):
-        if self.get_turn == WHITE:
-            return self.set_turn(BLACK)
+        if self.get_turn() == WHITE:
+            return BLACK
         else:
-            return self.set_turn(WHITE)
+            return WHITE
 
     def is_horizontal_clear(self, pos_from, pos_to):
         i_from, j_from = self.pos_2_ij(pos_from)
         i_to, j_to = self.pos_2_ij(pos_to)
         diff_j = j_to - j_from 
         for di in range(1, abs(diff_j) + 1):
-            if self.get_cell(i_from, j_from + sign(diff_j) * di) != EMPTY:
+            if self.get_cell_from_board((i_from, j_from + sign(diff_j) * di)) != EMPTY:
                 return False
         return True
     
@@ -409,7 +298,7 @@ class Chess:
         i_to, j_to = self.pos_2_ij(pos_to)
         diff_i = i_to - i_from 
         for di in range(1, abs(diff_i) + 1):
-            if self.get_cell(i_from + sign(diff_i) * di, j_from) != EMPTY:
+            if self.get_cell_from_board((i_from + sign(diff_i) * di, j_from)) != EMPTY:
                 return False  
         return True       
 
@@ -424,7 +313,7 @@ class Chess:
         sign_i = sign(diff_i)
         sign_j = sign(diff_j) 
         for di in range(1, abs(diff_i) + 1):
-            if self.get_cell(i_from + sign_i * di, j_from + sign_j * di) != EMPTY:
+            if self.get_cell_from_board((i_from + sign_i * di, j_from + sign_j * di)) != EMPTY:
                 return False  
         return True     
 
@@ -442,12 +331,14 @@ class Chess:
         if is_two_pos_same or is_not_valid_pos_from or is_not_valid_pos_to:
             return False
         
-        src_cell = self.get_cell(pos_from)
+        src_cell = self.get_cell_from_board(pos_from)
         src_cell_team = src_cell[0]
-        src_piece_num = self.get_piece_num(src_cell_team, pos_from)
-        target_cell = self.get_cell(pos_to)
+        src_piece_num = self.get_piece_num_from_board(src_cell_team, pos_from)
+        
+        target_cell = self.get_cell_from_board(pos_to)
         target_cell_team = target_cell[0]
-        target_piece_num = self.get_piece_num(target_cell_team, pos_to)
+        target_piece_num = self.get_piece_num_from_board(target_cell_team, pos_to)
+        
         
         is_not_my_turn = src_cell_team != self.get_turn()
         is_not_valid_teams = src_cell_team == target_cell_team
@@ -456,9 +347,9 @@ class Chess:
         
         isMoved = False
         isKilled = False
-        if self.move(src_piece_num, target_piece_num, pos_from, pos_to):
+        if self.move(src_piece_num, pos_to):
             isMoved = True
-        elif self.attack(src_piece_num, target_piece_num, pos_from, pos_to):
+        elif self.attack(src_piece_num, target_piece_num):
             isKilled = True
         # 허용되지 않은 수(illegal move)를 판단하는 부분:
         # (킹을 포함한) 자신의 어떤 기물이라도
@@ -473,27 +364,36 @@ class Chess:
         if isMoved or isKilled:
             if self.is_legal_move():
                 if isKilled:
-                    self.set_piece_alive(target_piece_num, False)
-                self.set_piece_pos(src_piece_num, i_to, j_to)
+                    self.get_team(target_cell_team).get_piece(target_piece_num).set_alive(False)
+                self.get_team(src_cell_team).get_piece(src_piece_num).set_pos(pos_to)
                 return True
         return False
  
  
  ####################단순 기물 이동 부분#############################
-    def move(self, src_piece_num, target_piece_num, pos_from, pos_to):
-        is_target_filled = self.get_cell(pos_to) !=  EMPTY 
+    def move(self, src_piece_num, pos_to):
+        is_target_filled = self.get_cell_from_board(pos_to) !=  EMPTY 
         if is_target_filled:
             return False
         src_team = self.get_turn()
         src_piece = self.get_team(src_team).get_piece(src_piece_num)
-        src_piece_moved = src_piece.get_moved()
+        print("src num", src_piece_num)
+        if self.piece_move(src_piece, pos_to):
+            return True
+        return False
+ 
+
+    def piece_move(self,src_piece, pos_to):
+        
         src_piece_type = src_piece.get_type()
+        src_piece_moved = src_piece.get_moved()
         if src_piece_type == PAWN:
             if not src_piece_moved:
                 if self.pawn_twostep_move(src_piece, pos_to):
+                    src_piece.set_moved(True)
                     return True         
-                elif self.pawn_move(src_piece, pos_to):
-                    return True
+            if self.pawn_move(src_piece, pos_to):
+                return True
         elif src_piece_type == ROOK:
             if self.rook_move(src_piece, pos_to):
                 return True
@@ -509,9 +409,7 @@ class Chess:
         elif src_piece_type == KING:
             if self.king_move(src_piece, pos_to):
                 return True
-        return False
- 
-
+    
     def pawn_twostep_move(self, src_piece, pos_to):
         src_team = src_piece.get_team()
         pos_from = src_piece.get_pos()
@@ -525,7 +423,7 @@ class Chess:
         if src_team == BLACK and diff_i == 2:
             is_ok = True
             for di in range(1, diff_i + 1):
-                if self.get_cell(i_from + di, j_from) != EMPTY:
+                if self.get_cell_from_board((i_from + di, j_from)) != EMPTY:
                     is_ok = False
                     break
             if is_ok:
@@ -533,13 +431,14 @@ class Chess:
         elif src_team == WHITE and diff_i == -2:
             is_ok = True
             for di in range(1, abs(diff_i) + 1):
-                if self.get_cell(i_from - di, j_from) != EMPTY:
+                if self.get_cell_from_board((i_from - di, j_from)) != EMPTY:
                     is_ok = False
                     break
             if is_ok:
                 return True
         return False
     def pawn_move(self, src_piece, pos_to):
+        print("move")
         src_team = src_piece.get_team()
         pos_from = src_piece.get_pos()
         i_from, j_from = self.pos_2_ij(pos_from)
@@ -549,9 +448,10 @@ class Chess:
         if isJPosNotSame or isIPosSame:
             return False
         diff_i = i_to - i_from
+        
         if (src_team == BLACK and diff_i == 1) or \
             (src_team == WHITE and diff_i == -1):
-            if self.get_cell(i_from + diff_i, j_from) == EMPTY:
+            if self.get_cell_from_board((i_from + diff_i, j_from)) == EMPTY:
                 return True
         return False
     
@@ -562,7 +462,8 @@ class Chess:
         i_to, j_to = self.pos_2_ij(pos_to)
         isHorizontal = i_from == i_to and j_from != j_to
         isVertical = i_from != i_to and j_from == j_to
-        if not isHorizontal or not isVertical:
+        if not (isHorizontal or isVertical):
+            print(i_from, j_from, i_to, j_to, isHorizontal, isVertical)
             return False
         # 룩이 수평 이동하는 경우
         if isHorizontal:
@@ -570,6 +471,7 @@ class Chess:
                 return True
         # 룩이 수직이동하는 경우
         elif isVertical:
+            print("ver")
             if self.is_vertical_clear(pos_from, pos_to):
                 return True
         return False
@@ -633,16 +535,22 @@ class Chess:
 
 
 ####################기물 공격 부분#############################
-    def attack(self, src_piece_num, target_piece_num, pos_from, pos_to):
-        is_target_empty = self.get_cell(pos_to) ==  EMPTY 
-        if is_target_empty:
-            return False
+    def attack(self, src_piece_num, target_piece_num):
         src_team = self.get_turn()
         src_piece = self.get_team(src_team).get_piece(src_piece_num)
-        src_piece_moved = src_piece.get_moved()
-        src_piece_type = src_piece.get_type()
         target_team = self.next_turn()
         target_piece = self.get_team(target_team).get_piece(target_piece_num)
+        is_target_empty = target_piece.get_type() ==  EMPTY 
+        if is_target_empty:
+            return False
+        
+        if self.piece_attack(src_piece, target_piece):
+            return True
+        return False
+        
+    
+    def piece_attack(self, src_piece, target_piece):
+        src_piece_type = src_piece.get_type()
         if src_piece_type == PAWN:
             if self.pawn_attack(src_piece, target_piece):
                 return True
@@ -753,16 +661,13 @@ class Chess:
         if not move_cond1 or not move_cond2 or not move_cond3:
             return False
         return True  
-    
-       
+     
     def queen_attack(self, src_piece, target_piece):
         if self.rook_attack(src_piece, target_piece):
             return True
         elif self.bishop_attack(src_piece, target_piece):
             return True
         return False             
-
-
 
     def king_attack(self, src_piece, target_piece):
         pos_from = src_piece.get_pos()
@@ -779,36 +684,25 @@ class Chess:
         return False
     
     
-    # 킹이 옮기는 위치가 공격당할 수 있는 곳인지 확인한다
-    def is_my_piece_vulnerable(self, my_team, i_whatif, j_whatif):
 
-        print("옮기려는 위치:", i_whatif, j_whatif)
-        for enemy_piece in enemy_pieces:
-            if enemy_piece.get_alive():
-                print(enemy_piece.get_team(), enemy_piece.get_type(), enemy_piece.get_pos())
-                enemy_piece_pos = enemy_piece.get_pos()
-                if self.attack(enemy_piece_pos[0],enemy_piece_pos[1], i_whatif, j_whatif, illegal=True):
-                    return True
-        return False
-      
-                
-                
+    # 적의 살아있는 기물이 자신의 킹을 잡을 수 있는지 판단한다
+    # (즉, 체크메이트가 되는 형국인지)     
     def is_legal_move(self):
-        if self.get_turn() == BLACK:
-            enemy_pieces = self.get_team("white").get_pieces()
-        else:
-            enemy_pieces = self.get_team("black").get_pieces()
-        # 적의 살아있는 기물이 자신의 킹을 잡을 수 있는지 판단한다
-        # (즉, 체크메이트가 되는 형국인지)
-        my_king_piece = self.get_team(self.get_turn()).get_pieces()
+        my_king_piece = self.get_team(self.get_turn()).get_piece(NUM_KING_PIECE)
+        print(self.next_turn())
+        enemy_pieces = self.get_team(self.next_turn()).get_all_pieces()
+        # 잠시 공수를 교대한다
+        isVulnerable = False
+        self.set_turn(self.next_turn())
         for enemy_piece in enemy_pieces:
             if enemy_piece.get_alive():
-                enemy_piece_pos = enemy_piece.get_pos()
-                if self.attack(enemy_piece_pos[0],enemy_piece_pos[1], i_whatif, j_whatif, illegal=True):
+                if self.piece_attack(enemy_piece, my_king_piece):
+                    isVulnerable = True
+                    break
+        # 공수를 원래대로 복귀시킨다
+        self.set_turn(self.next_turn())
+        if isVulnerable:
+            return False
+        return True
         
-            
-
-    
-    
-ch = Chess()
-ch.print_board()
+ 
