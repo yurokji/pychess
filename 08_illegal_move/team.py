@@ -26,6 +26,7 @@ class Team:
             self.__pieces.append(Piece(self.__team, KNIGHT, [0, 6],14))
             self.__pieces.append(Piece(self.__team, ROOK, [0, 7],15))
             self.__pieces[NUM_KING_PIECE].set_alive(True)
+            self.__pieces[NUM_PAWN_PIECE_5].set_alive(True)
         # 흰색 팀일 경우
         else:
             for x in range(CHESS_NUM_CELLS):

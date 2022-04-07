@@ -56,14 +56,7 @@ while chess.getRunning():
                 is_target_set = True
         if is_src_set and is_target_set:
             if chess.put(src_pos, target_pos):
-            # 말이 성공적으로 움직였다면
-                # 보드 업데이트
-                print("전", chess.get_current_turn())
-                chess.update_board()
-                # chess.print_board()
-                # 상대편 차례
                 chess.set_turn(chess.get_next_turn())
-                print("후", chess.get_current_turn())
             is_src_set = False
             is_target_set = False
 

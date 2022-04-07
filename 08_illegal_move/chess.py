@@ -90,7 +90,6 @@ class Chess:
         j = (px - sx) / stride
         # i <= 4.801 --> 4 ;; 4.1 ~ 4.9
         # j <= 2.3 --> 2 ;; 2.1 ~ 2.9
-        print(i,j)
         if i < 0 or i >= CHESS_NUM_CELLS \
             or j < 0 or j >= CHESS_NUM_CELLS:
                 return False, -1, -1
@@ -180,6 +179,8 @@ class Chess:
         sign_i = sign(diff_i)
         sign_j = sign(diff_j) 
         for di in range(1, abs(diff_i) + 1):
+            ic = i_from + sign_i * di
+            jc = j_from + sign_j * di
             if self.get_cell_from_board((i_from + sign_i * di, j_from + sign_j * di)) != EMPTY:
                 return False  
         return True     
@@ -205,7 +206,6 @@ class Chess:
         target_cell = self.get_cell_from_board(pos_to)
         target_cell_team = target_cell[0]
         target_piece_num = self.get_piece_num_from_board(target_cell_team, pos_to)
-        print("타겟셀팀",target_cell_team)
         
         is_not_my_turn = src_cell_team != self.get_current_turn()
         is_not_valid_teams = src_cell_team == target_cell_team
@@ -216,38 +216,50 @@ class Chess:
         isKilled = False
         if self.move(src_piece_num, pos_to):
             isMoved = True
-            print("원래 위치",  self.get_team(src_cell_team).get_piece(src_piece_num).get_pos())
-            print(self.get_team(src_cell_team).get_piece(src_piece_num).get_type(), "움직임 성공")
             self.get_team(src_cell_team).get_piece(src_piece_num).set_pos(pos_to)
-            print("옮긴 위치",  self.get_team(src_cell_team).get_piece(src_piece_num).get_pos())
-            
+            self.update_board()
         elif self.attack(src_piece_num, target_piece_num):
             isKilled = True
-            print("원래 위치",  self.get_team(src_cell_team).get_piece(src_piece_num).get_pos())
-            print(self.get_team(src_cell_team).get_piece(src_piece_num).get_type(), "움직임 성공")
             self.get_team(target_cell_team).get_piece(target_piece_num).set_alive(False)
             self.get_team(src_cell_team).get_piece(src_piece_num).set_pos(pos_to)
-            print("옮긴 위치",  self.get_team(src_cell_team).get_piece(src_piece_num).get_pos())
-            
+            self.update_board()
+        else:
+            return False
         
         # 허용되지 않은 수(illegal move)를 판단하는 부분:
         # 자신의 수로 인에 자신이 체크메이트에 걸리는지 검사
         # 킹은, 자신이나 신하에 의해 자살할 수 없음
+        # 현재 체크되어있다면 체크되지 않도록 위치를 이동해야 함
+        
+        # 주의점: 체크메이트나 스테일메이트를 검사하려면
+        # 자기말이나 킹을 옮겨서 체크를 피할 수 있는 자리가 있는지
+        # 모두 확인을 해야 함
+        # 그러려면 헬퍼를 만들어야 한다
+        # 체크 상태일때, 체크를 피할 자신의 어떤 말의 위치가 있지 않다?
+        # 그렇다면 체크메이트
+        # 체크 상태가 아닐때, 자신의 어떤 말이라도 움직이면 체크가 된다?
+        # 그렇다면 스테일메이트
         
         if isMoved or isKilled:
             if self.is_not_legal_move():
+                if self.get_team(src_cell_team).get_checked():
+                    print("현재 체크 상태임")
                 print("수를 놓을 수 없음")
                 if isKilled:
                     self.get_team(target_cell_team).get_piece(target_piece_num).set_alive(True)
                 self.get_team(src_cell_team).get_piece(src_piece_num).set_pos(pos_from)
+                self.update_board()
                 return False
-            
-            
-        # 모든 수가 완전하면 
-        # 자신의 수로 인에 상대방이 체크메이트에 걸리는지 검사
+        
+        if self.get_team(src_cell_team).get_checked():
+            print("체크에서 벗어났나?")
+        # 안전한 수를 놓아 자신의 킹이 체크에서 벗어났음
+        self.get_team(src_cell_team).set_checked(False)
+        # 반대로 자신의 수로 인에 상대방이 체크메이트에 걸리는지 검사
         if self.is_check():
             print("상대편이 체크 상태에 놓였습니다")
-            self.get_team(self.get_next_turn()).set_check(True)
+            self.get_team(self.get_next_turn()).set_checked(True)
+        
         return True
  
  
@@ -522,8 +534,10 @@ class Chess:
         # 마지막 목적지에만 적의 말이 놓여있는 경우
         # 말을 잡고 목적지로 움직인다
         if self.is_pos_same(pos_from, [i_to_before, j_to_before]):
+            print("1", pos_from, [i_to_before, j_to_before])
             return True
         elif self.is_diagonal_clear(pos_from, [i_to_before, j_to_before]):
+            print("2", pos_from, [i_to_before, j_to_before])
             return True
         return False
    
