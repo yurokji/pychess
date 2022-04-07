@@ -58,12 +58,12 @@ while chess.getRunning():
             if chess.put(src_pos, target_pos):
             # 말이 성공적으로 움직였다면
                 # 보드 업데이트
-                print(chess.get_turn())
+                print("전", chess.get_turn())
                 chess.update_board()
-                chess.print_board()
+                # chess.print_board()
                 # 상대편 차례
                 chess.set_turn(chess.next_turn())
-                print(chess.get_turn())
+                print("후", chess.get_turn())
             is_src_set = False
             is_target_set = False
 

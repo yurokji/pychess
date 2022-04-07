@@ -58,7 +58,7 @@ class Piece:
         self.__team = teamColor
         self.__pos = pos
         self.__num = num
-        self.__alive = True
+        self.__alive = False
         self.__moved = False
         
     def get_type(self):
@@ -119,6 +119,7 @@ class Team:
             self.__pieces.append(Piece(self.__team, BISHOP, [0, 5],13))
             self.__pieces.append(Piece(self.__team, KNIGHT, [0, 6],14))
             self.__pieces.append(Piece(self.__team, ROOK, [0, 7],15))
+            self.__pieces[NUM_KING_PIECE].set_alive(True)
         # 흰색 팀일 경우
         else:
             for x in range(CHESS_NUM_CELLS):
@@ -131,6 +132,8 @@ class Team:
             self.__pieces.append(Piece(self.__team, BISHOP, [7, 5],33))
             self.__pieces.append(Piece(self.__team, KNIGHT, [7, 6],34))
             self.__pieces.append(Piece(self.__team, ROOK, [7, 7],35))
+            self.__pieces[NUM_QUEEN_PIECE].set_alive(True)
+            self.__pieces[NUM_KING_PIECE].set_alive(True)
 
     def get_all_pieces(self):
         return self.__pieces
@@ -145,9 +148,9 @@ class Chess:
     def __init__(self):
         self.__board = []
         self.__turn = WHITE
-        self.__team = {}
-        self.__team[BLACK] = Team(BLACK)
-        self.__team[WHITE] = Team(WHITE)
+        self.__teams = {}
+        self.__teams[BLACK] = Team(BLACK)
+        self.__teams[WHITE] = Team(WHITE)
         self.clear_board()
         self.fill_board()
         self.__display = Display()
@@ -165,7 +168,7 @@ class Chess:
         self.__running = running
     
     def get_team(self, colorStr):
-        return self.__team[colorStr]
+        return self.__teams[colorStr]
    
     def clear_board(self):
         self.__board = []
@@ -189,18 +192,7 @@ class Chess:
                 self.__board[N][M] = EMPTY
 
 
-    def init(self):
-        self.__num_moves = 0  
-        self.__board = []
-        self.__turn = WHITE
-        self.__team = {}
-        self.__team[BLACK] = Team(BLACK)
-        self.__team[WHITE] = Team(WHITE)
-        self.clear_board()
-        self.fill_board()
-        self.__display = Display()
-        self.__running = True
-    
+   
     def pos_2_ij(self, pos):
         i = pos[0]
         j = pos[1]
@@ -303,7 +295,7 @@ class Chess:
         return True       
 
     # 대각선 방향 경로가 비워져있는지
-    def is_diamovenal_clear(self, pos_from, pos_to):
+    def is_diagonal_clear(self, pos_from, pos_to):
         i_from, j_from = self.pos_2_ij(pos_from)
         i_to, j_to = self.pos_2_ij(pos_to)
         diff_i = i_to - i_from 
@@ -362,6 +354,7 @@ class Chess:
         # 기물을 놓아도 되는 곳에 유저가 기물을 놓을때까지
         # 자신의 턴을 계속 유지하게 한다 
         if isMoved or isKilled:
+            print("체크 일리걸", self.get_turn(), src_cell_team)
             if self.is_legal_move():
                 if isKilled:
                     self.get_team(target_cell_team).get_piece(target_piece_num).set_alive(False)
@@ -377,7 +370,6 @@ class Chess:
             return False
         src_team = self.get_turn()
         src_piece = self.get_team(src_team).get_piece(src_piece_num)
-        print("src num", src_piece_num)
         if self.piece_move(src_piece, pos_to):
             return True
         return False
@@ -438,7 +430,6 @@ class Chess:
                 return True
         return False
     def pawn_move(self, src_piece, pos_to):
-        print("move")
         src_team = src_piece.get_team()
         pos_from = src_piece.get_pos()
         i_from, j_from = self.pos_2_ij(pos_from)
@@ -456,14 +447,12 @@ class Chess:
         return False
     
     def rook_move(self, src_piece, pos_to):
-        src_team = src_piece.get_team()
         pos_from = src_piece.get_pos()
         i_from, j_from = self.pos_2_ij(pos_from)
         i_to, j_to = self.pos_2_ij(pos_to)
         isHorizontal = i_from == i_to and j_from != j_to
         isVertical = i_from != i_to and j_from == j_to
         if not (isHorizontal or isVertical):
-            print(i_from, j_from, i_to, j_to, isHorizontal, isVertical)
             return False
         # 룩이 수평 이동하는 경우
         if isHorizontal:
@@ -477,21 +466,19 @@ class Chess:
         return False
     
     def bishop_move(self, src_piece, pos_to):
-        src_team = src_piece.get_team()
         pos_from = src_piece.get_pos()
         i_from, j_from = self.pos_2_ij(pos_from)
         i_to, j_to = self.pos_2_ij(pos_to)
         diff_i = i_to - i_from 
         diff_j = j_to - j_from
-        isNotDiamovenal = abs(diff_i) != abs(diff_j)
-        if isNotDiamovenal:
+        is_not_diag_move = abs(diff_i) != abs(diff_j)
+        if is_not_diag_move:
             return False
-        if self.is_diamovenal_clear(pos_from, pos_to):
+        if self.is_diagonal_clear(pos_from, pos_to):
             return True
         return False
     
     def knight_move(self, src_piece, pos_to):
-        src_team = src_piece.get_team()
         pos_from = src_piece.get_pos()
         i_from, j_from = self.pos_2_ij(pos_from)
         i_to, j_to = self.pos_2_ij(pos_to)
@@ -500,7 +487,7 @@ class Chess:
         move_cond1 =  abs(diff_i) >= 1 and abs(diff_i) << 2 
         move_cond2 =  abs(diff_j) >= 1 and abs(diff_j) << 2
         move_cond3 = (abs(diff_i) + abs(diff_j)) == 3
-        if not move_cond1 or not move_cond2 or not move_cond3:
+        if not (move_cond1 and move_cond2 and move_cond3):
             return False
         return True  
     
@@ -512,7 +499,6 @@ class Chess:
         return False
     
     def king_move(self, src_piece, pos_to):
-        src_team = src_piece.get_team()
         pos_from = src_piece.get_pos()
         i_from, j_from = self.pos_2_ij(pos_from)
         i_to, j_to = self.pos_2_ij(pos_to)
@@ -595,33 +581,35 @@ class Chess:
         i_to, j_to = self.pos_2_ij(pos_to)
         diff_i = i_to - i_from
         diff_j = j_to - j_from
-
+        sign_i  = sign(diff_i)
+        sign_j  = sign(diff_j)
         isHorizontal = i_from == i_to and j_from != j_to
         isVertical = i_from != i_to and j_from == j_to
-        if not isHorizontal or not isVertical:
+        if not (isHorizontal or isVertical):
             return False
+        
         # 룩이 수평 이동하는 경우
         if isHorizontal:
             # 목적지 도착 직전 위치 계산
-            j_to_before = j_from + (abs(j_to - j_from) - 1) * sign(j_to - j_from)
+            j_to_before = j_from + (abs(diff_j) - 1) * sign_j
             # 다른 경로는 다 비어있고 
             # 마지막 목적지에만 적의 말이 놓여있는 경우
             # 말을 잡고 목적지로 움직인다
             if j_from == j_to_before:
-                # print("옆의놈먹자")
                 return True
-            elif self.is_horizontal_clear(pos_from, (pos_to[0], j_to_before)):
+            elif self.is_horizontal_clear(pos_from, (i_to, j_to_before)):
                 return True
 
         # 룩이 수직이동하는 경우
         elif isVertical:
             # 목적지 도착 직전 위치 계산
-            i_to_before = i_from + (abs(i_to - i_from) - 1) * sign(i_to - i_from)
+            i_to_before = i_from + (abs(diff_i) - 1) * sign_i
+            print("i_to_before",i_to_before)
             # # 마지막 목적지에만 적의 말이 놓여있는 경우
             # # 말을 잡고 목적지로 움직인다
             if i_from == i_to_before:
                 return True
-            elif self.is_vertical_clear(pos_from, (i_to_before, pos_to[1])):
+            elif self.is_vertical_clear(pos_from, (i_to_before, j_to)):
                 return True
         return False   
    
@@ -634,17 +622,17 @@ class Chess:
         diff_j = j_to - j_from
         sign_i = sign(diff_i)
         sign_j = sign(diff_j)
-        isNotDiamovenal = abs(diff_i) != abs(diff_j)
-        if isNotDiamovenal:
+        is_not_diag_move = abs(diff_i) != abs(diff_j)
+        if is_not_diag_move:
             return False
         i_to_before = i_from + (abs(diff_i) - 1) * sign_i
         j_to_before = j_from + (abs(diff_j) - 1) * sign_j
         # 다른 경로는 다 비어있고 
         # 마지막 목적지에만 적의 말이 놓여있는 경우
         # 말을 잡고 목적지로 움직인다
-        if self.is_pos_same((i_from, j_from), (i_to_before, j_to_before)):
+        if self.is_pos_same(pos_from, (i_to_before, j_to_before)):
             return True
-        elif self.is_diamovenal_clear(pos_from, pos_to):
+        elif self.is_diagonal_clear(pos_from, (i_to_before, j_to_before)):
             return True
         return False
    
@@ -658,11 +646,12 @@ class Chess:
         move_cond1 =  abs(diff_i) >= 1 and abs(diff_i) << 2 
         move_cond2 =  abs(diff_j) >= 1 and abs(diff_j) << 2
         move_cond3 = (abs(diff_i) + abs(diff_j)) == 3
-        if not move_cond1 or not move_cond2 or not move_cond3:
+        if not (move_cond1 and move_cond2 and move_cond3):
             return False
         return True  
      
     def queen_attack(self, src_piece, target_piece):
+        print("퀸 어태크")
         if self.rook_attack(src_piece, target_piece):
             return True
         elif self.bishop_attack(src_piece, target_piece):
@@ -688,16 +677,20 @@ class Chess:
     # 적의 살아있는 기물이 자신의 킹을 잡을 수 있는지 판단한다
     # (즉, 체크메이트가 되는 형국인지)     
     def is_legal_move(self):
+        print("king num:", NUM_KING_PIECE)
         my_king_piece = self.get_team(self.get_turn()).get_piece(NUM_KING_PIECE)
         print(self.next_turn())
         enemy_pieces = self.get_team(self.next_turn()).get_all_pieces()
         # 잠시 공수를 교대한다
         isVulnerable = False
         self.set_turn(self.next_turn())
+        print("마이프레셔스킹", my_king_piece.get_type(), my_king_piece.get_pos())
         for enemy_piece in enemy_pieces:
             if enemy_piece.get_alive():
-                if self.piece_attack(enemy_piece, my_king_piece):
-                    isVulnerable = True
+                print(enemy_piece.get_type(), enemy_piece.get_pos())
+                isVulnerable = self.piece_attack(enemy_piece, my_king_piece)
+                print(isVulnerable)
+                if isVulnerable == True:
                     break
         # 공수를 원래대로 복귀시킨다
         self.set_turn(self.next_turn())
