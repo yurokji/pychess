@@ -4,7 +4,7 @@ from pygame.locals import *
 
 class Display:
     def __init__(self):
-        self.__SURFACE = pygame.display.set_mode((CHES_BOARD_SIZE,CHES_BOARD_SIZE))
+        self.__SURFACE = pygame.display.set_mode((CHES_BOARD_SIZE,CHES_BOARD_SIZE), pygame.DOUBLEBUF, 32)
         self.__img_piece = pygame.image.load((CHESS_PIECE_IMAGE_NAME))
         self.__white_piece_list = []
         self.__black_piece_list = []
@@ -20,7 +20,9 @@ class Display:
         return self.__white_piece_list
     def getBlackPieceImgs(self):
         return self.__black_piece_list
-    
+
+
+        
        
     def prep_piece_picture(self):
         for i in range(2):

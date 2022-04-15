@@ -7,7 +7,7 @@ class Piece:
         self.__team = teamColor
         self.__pos = pos
         self.__num = num
-        self.__alive = False
+        self.__alive = True
         self.__moved = False
         
     def get_type(self):

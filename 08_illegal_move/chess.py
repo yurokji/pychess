@@ -191,6 +191,84 @@ class Chess:
             return False
 
 
+    def show_all_possible_move(self, pos_from):
+        if not self.is_valid_pos(pos_from):
+            return False
+        src_cell = self.get_cell_from_board(pos_from)
+        src_cell_team = src_cell[0]
+        src_piece_num = self.get_piece_num_from_board(src_cell_team, pos_from)
+        
+       
+        test_pos = []
+        possible_pos = []
+        for i in range(CHESS_NUM_CELLS):
+            for j in range(CHESS_NUM_CELLS):
+                if i != pos_from[0] or j != pos_from[1]:
+                    test_pos.append([i,j])
+        
+        # print(test_pos)
+        for pos_to in test_pos:
+            
+            target_cell = self.get_cell_from_board(pos_to)
+            # print(pos_to, target_cell)
+            target_cell_team = target_cell[0]
+            target_piece_num = self.get_piece_num_from_board(target_cell_team, pos_to)
+            
+            is_not_my_turn = src_cell_team != self.get_current_turn()
+            is_not_valid_teams = src_cell_team == target_cell_team
+            if is_not_my_turn or is_not_valid_teams:
+                print(pos_to, "is_not_valid_teams")
+                continue
+            
+            isMoved = False
+            isKilled = False
+            
+            if self.move(src_piece_num, pos_to):
+                
+                isMoved = True
+                self.get_team(src_cell_team).get_piece(src_piece_num).set_pos(pos_to)
+                self.update_board()
+                print("이동 가능:", pos_from, pos_to, target_piece_num)
+                
+            elif self.attack(src_piece_num, target_piece_num):
+                print("공격 가능:", pos_from, pos_to, target_piece_num)
+                self.get_team(target_cell_team).get_piece(target_piece_num).set_alive(False)
+                self.get_team(src_cell_team).get_piece(src_piece_num).set_pos(pos_to)
+                self.update_board()
+                
+                isKilled = True
+            else:
+                print(pos_to, "no move")
+                continue
+
+            if isMoved or isKilled:
+                if self.is_not_legal_move():
+                    if self.get_team(src_cell_team).get_checked():
+                        print("현재 체크 상태임")
+                    print("수를 놓을 수 없음")
+                    if isKilled:
+                        self.get_team(target_cell_team).get_piece(target_piece_num).set_alive(True)
+                        isKilled = False
+                    isMoved = False
+                    self.get_team(src_cell_team).get_piece(src_piece_num).set_pos(pos_from)
+                    self.update_board()
+                    continue
+            
+            if isMoved or isKilled:
+                self.get_team(src_cell_team).get_piece(src_piece_num).set_pos(pos_from)
+                if isKilled:
+                    
+                    self.get_team(target_cell_team).get_piece(target_piece_num).set_alive(True)
+                self.update_board()
+                possible_pos.append(pos_to)
+                
+                
+        print(possible_pos)
+                    
+        return possible_pos
+    
+
+
     def put(self, pos_from, pos_to):
         is_two_pos_same = self.is_pos_same(pos_from, pos_to)
         is_not_valid_pos_from = not self.is_valid_pos(pos_from)
@@ -251,6 +329,17 @@ class Chess:
                 self.update_board()
                 return False
         
+        # 프로모션 가능?
+        if self.get_team(src_cell_team).get_piece(src_piece_num).get_type() == PAWN:
+            if (self.get_team(src_cell_team).get_piece(src_piece_num).get_team() == WHITE and \
+            self.get_team(src_cell_team).get_piece(src_piece_num).get_pos()[0] == 0) or \
+            (self.get_team(src_cell_team).get_piece(src_piece_num).get_team() == BLACK and \
+            self.get_team(src_cell_team).get_piece(src_piece_num).get_pos()[0] == 7):
+                print("퀸으로 프로모션")
+                self.get_team(src_cell_team).get_piece(src_piece_num).set_type(QUEEN)
+                self.update_board()
+                
+        
         if self.get_team(src_cell_team).get_checked():
             print("체크에서 벗어났나?")
         # 안전한 수를 놓아 자신의 킹이 체크에서 벗어났음
@@ -259,6 +348,8 @@ class Chess:
         if self.is_check():
             print("상대편이 체크 상태에 놓였습니다")
             self.get_team(self.get_next_turn()).set_checked(True)
+        
+        
         
         return True
  
@@ -276,13 +367,14 @@ class Chess:
  
 
     def piece_move(self,src_piece, pos_to):
-        
+        src_piece_team = src_piece.get_team()
         src_piece_type = src_piece.get_type()
         src_piece_moved = src_piece.get_moved()
+        src_pos = src_piece.get_pos()
         if src_piece_type == PAWN:
-            if not src_piece_moved:
+             
+            if src_piece_team == BLACK and src_pos[0] == 1 or src_piece_team == WHITE and src_pos[0] == 6:
                 if self.pawn_twostep_move(src_piece, pos_to):
-                    src_piece.set_moved(True)
                     return True         
             if self.pawn_move(src_piece, pos_to):
                 return True
@@ -423,38 +515,53 @@ class Chess:
 
 ####################기물 공격 부분#############################
     def attack(self, src_piece_num, target_piece_num):
+        
         src_team = self.get_current_turn()
         src_piece = self.get_team(src_team).get_piece(src_piece_num)
         target_team = self.get_next_turn()
         target_piece = self.get_team(target_team).get_piece(target_piece_num)
+        if target_piece == -1:
+            return False
         is_target_empty = target_piece.get_type() ==  EMPTY 
         if is_target_empty:
             return False
         
+        pos_from = src_piece.get_pos()
+        pos_to = target_piece.get_pos()
+        print("공격", pos_from, pos_to, target_piece_num)
         if self.piece_attack(src_piece, target_piece):
             return True
         return False
         
     
     def piece_attack(self, src_piece, target_piece):
+        pos_from = src_piece.get_pos()
+        pos_to = target_piece.get_pos()
+        print("피스 공격", pos_from, pos_to)
         src_piece_type = src_piece.get_type()
         if src_piece_type == PAWN:
             if self.pawn_attack(src_piece, target_piece):
+                print("폰 공격 성공")
                 return True
         elif src_piece_type == ROOK:
             if self.rook_attack(src_piece, target_piece):
+                print("룩 공격 성공")
                 return True
         elif src_piece_type == BISHOP:
             if self.bishop_attack(src_piece, target_piece):
+                print("비숍 공격 성공")
                 return True
         elif src_piece_type == KNIGHT:
             if self.knight_attack(src_piece, target_piece):
+                print("나이트 공격 성공")
                 return True
         elif src_piece_type == QUEEN:
             if self.queen_attack(src_piece, target_piece):
+                print("퀸 공격 성공")
                 return True
         elif src_piece_type == KING:
             if self.king_attack(src_piece, target_piece):
+                print("킹 공격 성공")
                 return True
         return False
 
@@ -478,6 +585,7 @@ class Chess:
     def rook_attack(self, src_piece, target_piece):
         pos_from = src_piece.get_pos()
         pos_to = target_piece.get_pos()
+        print("룩 공격1", pos_from, pos_to)
         i_from, j_from = self.pos_2_ij(pos_from)
         i_to, j_to = self.pos_2_ij(pos_to)
         diff_i = i_to - i_from
@@ -488,9 +596,10 @@ class Chess:
         isVertical = i_from != i_to and j_from == j_to
         if not (isHorizontal or isVertical):
             return False
-        
+        print("룩 공격", pos_from, pos_to)
         # 룩이 수평 이동하는 경우
         if isHorizontal:
+            print("수평공격")
             # 목적지 도착 직전 위치 계산
             j_to_before = j_from + (abs(diff_j) - 1) * sign_j
             # 다른 경로는 다 비어있고 
@@ -503,6 +612,7 @@ class Chess:
 
         # 룩이 수직이동하는 경우
         elif isVertical:
+            print("수직공격")
             # 목적지 도착 직전 위치 계산
             i_to_before = i_from + (abs(diff_i) - 1) * sign_i
             print("i_to_before",i_to_before)
@@ -556,10 +666,14 @@ class Chess:
         return True  
      
     def queen_attack(self, src_piece, target_piece):
-        print("퀸 어태크")
+        pos_from = src_piece.get_pos()
+        pos_to = target_piece.get_pos()
+        print("퀸 어태크",pos_from, pos_to)
         if self.rook_attack(src_piece, target_piece):
+            print("퀸 룩형식의 공격 성공")
             return True
         elif self.bishop_attack(src_piece, target_piece):
+            print("퀸 비숍형식의 공격 성공")
             return True
         return False             
 

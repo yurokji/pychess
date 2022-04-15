@@ -25,8 +25,8 @@ class Team:
             self.__pieces.append(Piece(self.__team, BISHOP, [0, 5],13))
             self.__pieces.append(Piece(self.__team, KNIGHT, [0, 6],14))
             self.__pieces.append(Piece(self.__team, ROOK, [0, 7],15))
-            self.__pieces[NUM_KING_PIECE].set_alive(True)
-            self.__pieces[NUM_PAWN_PIECE_5].set_alive(True)
+            # self.__pieces[NUM_KING_PIECE].set_alive(True)
+            # self.__pieces[NUM_PAWN_PIECE_5].set_alive(True)
         # 흰색 팀일 경우
         else:
             for x in range(CHESS_NUM_CELLS):
@@ -39,15 +39,18 @@ class Team:
             self.__pieces.append(Piece(self.__team, BISHOP, [7, 5],33))
             self.__pieces.append(Piece(self.__team, KNIGHT, [7, 6],34))
             self.__pieces.append(Piece(self.__team, ROOK, [7, 7],35))
-            self.__pieces[NUM_PAWN_PIECE_4].set_alive(True)
-            self.__pieces[NUM_QUEEN_PIECE].set_alive(True)
-            self.__pieces[NUM_KING_PIECE].set_alive(True)
+            # self.__pieces[NUM_PAWN_PIECE_2].set_alive(True)
+            # self.__pieces[NUM_QUEEN_PIECE].set_alive(True)
+            # self.__pieces[NUM_KING_PIECE].set_alive(True)
 
     def get_all_pieces(self):
         return self.__pieces
     
     def get_piece(self, piece_num):
-        return self.__pieces[piece_num]
+        if piece_num >= 0:
+            return self.__pieces[piece_num]
+        else:
+            return -1
     
     def get_checked(self):
         return self.__checked

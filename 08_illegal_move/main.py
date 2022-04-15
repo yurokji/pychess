@@ -1,6 +1,13 @@
 from chess_const import *
 from chess import *
 
+
+def draw_rect_alpha(surface, color, rect):
+    shape_surf = pygame.Surface(pygame.Rect(rect).size, pygame.SRCALPHA)
+    pygame.draw.rect(shape_surf, color, shape_surf.get_rect())
+    surface.blit(shape_surf, rect)
+        
+
 chess = Chess()
 chess_disp_surf = chess.getDisplay().getSurface()
 chess.print_board()
@@ -54,6 +61,8 @@ while chess.getRunning():
                 CHESS_BOARD_CELL_PIXELS, CHESS_BOARD_CELL_PIXELS)
                 target_piece_type = chess.get_cell_from_board(target_pos)
                 is_target_set = True
+        if is_src_set and not is_target_set:
+            possible_pos = chess.show_all_possible_move(src_pos)
         if is_src_set and is_target_set:
             if chess.put(src_pos, target_pos):
                 chess.set_turn(chess.get_next_turn())
@@ -74,7 +83,13 @@ while chess.getRunning():
                 pygame.draw.rect(chess_disp_surf, (180, 136, 102), rect, 0)
 
     if is_src_set:
-        pygame.draw.rect(chess_disp_surf, CHESS_PIECE_SRC_COLOR, src_rect, 0)
+        draw_rect_alpha(chess_disp_surf, CHESS_PIECE_SRC_COLOR, src_rect)
+        for i, j in possible_pos:
+            possible_rect = (j * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, \
+            i * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, \
+                CHESS_BOARD_CELL_PIXELS, CHESS_BOARD_CELL_PIXELS)
+            draw_rect_alpha(chess_disp_surf, CHESS_PIECE_GUIDE_COLOR, possible_rect)
+            # pygame.draw.rect(chess_disp_surf, CHESS_PIECE_GUIDE_COLOR, possible_rect, 0)
     elif is_target_set:
         pygame.draw.rect(chess_disp_surf, CHESS_PIECE_TARGET_COLOR, target_rect, 0)
 
@@ -104,7 +119,7 @@ while chess.getRunning():
                 chess_disp_surf.blit(chess.getDisplay().getBlackPieceImgs()[sprite_num], \
                     (M * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING, N * CHESS_BOARD_CELL_PIXELS + CHESS_BOARD_PADDING))
 
-                
+
     pygame.display.update()
 
 pygame.quit()
